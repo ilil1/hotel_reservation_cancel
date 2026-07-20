@@ -1,0 +1,32 @@
+hotel,is_canceled,lead_time,arrival_date_year,arrival_date_month,arrival_date_day_of_month,adults,children,stays_in_weekend_nights,stays_in_week_nights,meal,country,market_segment,distribution_channel,is_repeated_guest,previous_cancellations,previous_bookings_not_canceled,reserved_room_type,assigned_room_type,booking_changes,deposit_type,agent,company,days_in_waiting_list,customer_type,adr,required_car_parking_spaces,total_of_special_requests,reservation_status,reservation_status_date
+City Hotel,0,5,2015,July,1,2,0,0,2,BB,PRT,Direct,Direct,0,0,0,A,A,0,No Deposit,,,0,Transient,85,0,1,Check-Out,2015-07-03
+City Hotel,1,120,2015,July,2,2,0,1,3,BB,GBR,Online TA,TA/TO,0,0,0,A,A,0,No Deposit,9,,0,Transient,110,0,0,Canceled,2015-06-01
+City Hotel,0,12,2015,July,3,1,0,0,1,HB,ESP,Direct,Direct,0,0,0,D,D,1,No Deposit,,,0,Transient,92,1,2,Check-Out,2015-07-04
+City Hotel,1,210,2015,July,4,2,1,2,4,BB,PRT,Groups,TA/TO,0,1,0,A,A,0,Non Refund,14,,20,Transient,70,0,0,Canceled,2015-05-10
+City Hotel,0,2,2015,July,5,2,0,1,1,BB,FRA,Online TA,TA/TO,0,0,0,A,D,0,No Deposit,7,,0,Transient,125,0,3,Check-Out,2015-07-07
+City Hotel,1,95,2015,August,1,2,0,0,3,BB,DEU,Online TA,TA/TO,0,0,0,A,A,0,No Deposit,9,,0,Transient,115,0,0,Canceled,2015-07-02
+City Hotel,0,20,2015,August,2,2,0,2,2,BB,ITA,Direct,Direct,0,0,0,D,D,2,No Deposit,,,0,Transient,130,1,2,Check-Out,2015-08-06
+City Hotel,1,330,2015,August,3,1,0,0,5,BB,PRT,Groups,TA/TO,0,0,0,A,A,0,Non Refund,20,,45,Transient,65,0,0,Canceled,2015-04-01
+City Hotel,0,7,2015,September,1,2,1,0,2,HB,NLD,Online TA,TA/TO,0,0,0,D,D,0,No Deposit,8,,0,Transient,145,0,3,Check-Out,2015-09-03
+City Hotel,1,150,2015,September,2,2,0,1,3,BB,BRA,Offline TA/TO,TA/TO,0,0,0,A,A,0,No Deposit,6,,10,Transient,80,0,0,Canceled,2015-08-01
+City Hotel,0,3,2015,October,1,1,0,0,1,BB,PRT,Corporate,Corporate,1,0,2,A,A,0,No Deposit,,40,0,Transient,75,1,1,Check-Out,2015-10-02
+City Hotel,1,180,2015,October,2,2,0,2,3,BB,GBR,Online TA,TA/TO,0,0,0,D,D,0,No Deposit,9,,0,Transient,105,0,0,Canceled,2015-09-01
+City Hotel,0,16,2015,November,1,2,0,1,2,BB,ESP,Direct,Direct,0,0,0,A,D,1,No Deposit,,,0,Transient,90,1,2,Check-Out,2015-11-04
+City Hotel,1,270,2015,November,2,2,0,0,4,BB,PRT,Groups,TA/TO,0,1,0,A,A,0,Non Refund,15,,30,Transient,62,0,0,Canceled,2015-08-03
+City Hotel,0,9,2015,December,1,2,1,0,2,HB,FRA,Online TA,TA/TO,0,0,0,D,D,0,No Deposit,7,,0,Transient,140,0,4,Check-Out,2015-12-03
+City Hotel,1,88,2015,December,2,1,0,1,2,BB,DEU,Offline TA/TO,TA/TO,0,0,0,A,A,0,No Deposit,6,,5,Transient,78,0,0,Canceled,2015-11-05
+City Hotel,0,4,2016,January,1,2,0,0,2,BB,PRT,Direct,Direct,1,0,3,A,A,0,No Deposit,,,0,Transient,82,1,2,Check-Out,2016-01-03
+City Hotel,1,140,2016,January,2,2,0,2,3,BB,GBR,Online TA,TA/TO,0,0,0,D,D,0,No Deposit,9,,0,Transient,99,0,0,Canceled,2015-12-01
+City Hotel,0,11,2016,February,1,2,0,1,1,BB,ITA,Direct,Direct,0,0,0,A,A,1,No Deposit,,,0,Transient,95,0,3,Check-Out,2016-02-03
+City Hotel,1,300,2016,February,2,2,0,0,5,BB,PRT,Groups,TA/TO,0,0,0,A,A,0,Non Refund,21,,50,Transient,60,0,0,Canceled,2015-10-01
+City Hotel,0,6,2016,March,1,1,0,0,2,HB,NLD,Online TA,TA/TO,0,0,0,D,D,0,No Deposit,8,,0,Transient,128,1,2,Check-Out,2016-03-03
+City Hotel,1,100,2016,March,2,2,1,2,2,BB,BRA,Online TA,TA/TO,0,0,0,A,A,0,No Deposit,9,,0,Transient,118,0,0,Canceled,2016-02-01
+City Hotel,0,1,2016,April,1,2,0,0,1,BB,PRT,Corporate,Corporate,1,0,4,A,A,0,No Deposit,,42,0,Transient,72,1,1,Check-Out,2016-04-02
+City Hotel,1,200,2016,April,2,2,0,1,4,BB,GBR,Offline TA/TO,TA/TO,0,1,0,D,D,0,Non Refund,16,,22,Transient,68,0,0,Canceled,2016-01-10
+City Hotel,0,14,2016,May,1,2,0,2,2,BB,ESP,Direct,Direct,0,0,0,A,D,2,No Deposit,,,0,Transient,135,1,3,Check-Out,2016-05-05
+City Hotel,1,75,2016,May,2,1,0,0,3,BB,DEU,Online TA,TA/TO,0,0,0,A,A,0,No Deposit,9,,0,Transient,108,0,0,Canceled,2016-04-05
+City Hotel,0,8,2016,June,1,2,1,1,2,HB,FRA,Online TA,TA/TO,0,0,0,D,D,1,No Deposit,7,,0,Transient,155,0,4,Check-Out,2016-06-04
+City Hotel,1,250,2016,June,2,2,0,2,4,BB,PRT,Groups,TA/TO,0,0,0,A,A,0,Non Refund,18,,35,Transient,64,0,0,Canceled,2016-02-10
+City Hotel,0,3,2016,July,1,2,0,0,2,BB,ITA,Direct,Direct,1,0,5,A,A,0,No Deposit,,,0,Transient,100,1,2,Check-Out,2016-07-03
+City Hotel,1,130,2016,July,2,2,0,1,3,BB,GBR,Online TA,TA/TO,0,0,0,D,D,0,No Deposit,9,,0,Transient,122,0,0,Canceled,2016-06-01
+Resort Hotel,0,10,2016,July,3,2,0,1,2,BB,PRT,Direct,Direct,0,0,0,A,A,0,No Deposit,,,0,Transient,99,1,2,Check-Out,2016-07-06

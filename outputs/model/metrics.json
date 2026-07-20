@@ -1,0 +1,24 @@
+{
+  "selected_model": "random_forest",
+  "selection_rule": "highest validation PR-AUC, then F1",
+  "validation": {
+    "pr_auc": 0.890688,
+    "roc_auc": 0.903068,
+    "precision": 0.73653,
+    "recall": 0.866604,
+    "f1": 0.79629,
+    "threshold": 0.378402,
+    "rows": 11899,
+    "cancellation_rate": 0.445416
+  },
+  "test": {
+    "pr_auc": 0.824463,
+    "roc_auc": 0.86734,
+    "precision": 0.684304,
+    "recall": 0.803115,
+    "f1": 0.738964,
+    "threshold": 0.378402,
+    "rows": 11900,
+    "cancellation_rate": 0.404622
+  }
+}

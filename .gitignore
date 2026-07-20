@@ -1,0 +1,10 @@
+.venv/
+.agents/
+__pycache__/
+*.pyc
+data/raw/*.csv
+# 학습된 모델은 약 75MB이므로 Git 대신 로컬에서 다시 생성한다.
+outputs/model/model.joblib
+outputs/predictions.csv
+work/*
+!work/.gitkeep
