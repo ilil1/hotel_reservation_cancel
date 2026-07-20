@@ -55,6 +55,22 @@ data/raw/hotel_bookings.csv
 
 원본은 CC BY 4.0이며, Antonio, Almeida, Nunes (2019)의 *Hotel booking demand datasets*에서 유래했습니다. 저장소에는 원본 데이터를 재배포하지 않습니다.
 
+원본 CSV에는 두 호텔의 예약이 함께 들어 있습니다.
+
+```text
+hotel
+├─ City Hotel       79,330건  (Lisbon)
+└─ Resort Hotel     40,060건  (Algarve)
+                    ────────
+전체               119,390건
+```
+
+두 호텔은 `hotel` 열로 구분됩니다. 이 프로젝트는 아래 조건으로 Lisbon의 City Hotel만 선택하므로 Resort Hotel 40,060건은 모델 학습에서 제외됩니다.
+
+```python
+city = frame.loc[frame["hotel"].eq("City Hotel")].copy()
+```
+
 ## 설치
 
 Python 3.10 이상을 권장합니다.
