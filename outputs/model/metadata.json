@@ -1,5 +1,5 @@
 {
-  "threshold": 0.3784021418068148,
+  "threshold": 0.5,
   "selected_model": "random_forest",
   "feature_columns": [
     "lead_time",

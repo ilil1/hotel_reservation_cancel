@@ -17,12 +17,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
-    average_precision_score,
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
     f1_score,
-    precision_recall_curve,
     precision_score,
     recall_score,
-    roc_auc_score,
 )
 from sklearn.pipeline import Pipeline
 
@@ -31,57 +31,33 @@ def calculate_metrics(y_true, probability, threshold: float) -> dict[str, float 
     """예측 확률과 임계값으로 주요 분류 성능을 계산한다."""
     predicted = (probability >= threshold).astype(int)
     return {
-        "pr_auc": round(float(average_precision_score(y_true, probability)), 6),
-        "roc_auc": round(float(roc_auc_score(y_true, probability)), 6),
+        "accuracy": round(float(accuracy_score(y_true, predicted)), 6),
         "precision": round(float(precision_score(y_true, predicted, zero_division=0)), 6),
         "recall": round(float(recall_score(y_true, predicted, zero_division=0)), 6),
         "f1": round(float(f1_score(y_true, predicted, zero_division=0)), 6),
-        "threshold": round(float(threshold), 6),
         "rows": int(len(y_true)),
         "cancellation_rate": round(float(y_true.mean()), 6),
     }
 
 
-def find_best_threshold(y_true, probability) -> float:
-    """검증 데이터에서 F1이 가장 높은 취소 판단 임계값을 찾는다."""
-    precision, recall, thresholds = precision_recall_curve(y_true, probability)
-    if not len(thresholds):
-        return 0.5
-
-    denominator = np.maximum(precision[:-1] + recall[:-1], 1e-12)
-    f1_scores = 2 * precision[:-1] * recall[:-1] / denominator
-    return float(thresholds[int(np.nanargmax(f1_scores))])
-
-
 def select_best_model(fitted_models: dict[str, Pipeline], x_valid, y_valid):
-    """검증 PR-AUC와 F1을 기준으로 최종 모델을 선택한다."""
+    """기본 임계값 0.5의 검증 F1과 Accuracy로 최종 모델을 선택한다."""
     comparisons = []
     for name, model in fitted_models.items():
         probability = model.predict_proba(x_valid)[:, 1]
-        threshold = find_best_threshold(y_valid, probability)
         comparisons.append(
-            {"model": name, **calculate_metrics(y_valid, probability, threshold)}
+            {"model": name, **calculate_metrics(y_valid, probability, 0.5)}
         )
 
     table = pd.DataFrame(comparisons).sort_values(
-        ["pr_auc", "f1"], ascending=False
+        ["f1", "accuracy"], ascending=False
     )
     winner_name = str(table.iloc[0]["model"])
     return winner_name, fitted_models[winner_name], table
 
 
 def save_plots(y_valid, valid_probability, threshold, y_test, test_probability, output: Path):
-    """검증 PR 곡선과 테스트 혼동행렬을 PNG로 저장한다."""
-    precision, recall, _ = precision_recall_curve(y_valid, valid_probability)
-    plt.figure(figsize=(7, 5))
-    plt.plot(recall, precision)
-    plt.xlabel("Recall")
-    plt.ylabel("Precision")
-    plt.title(f"Validation precision-recall curve (threshold={threshold:.3f})")
-    plt.tight_layout()
-    plt.savefig(output / "precision_recall_curve.png", dpi=160)
-    plt.close()
-
+    """테스트 혼동행렬을 PNG로 저장한다."""
     ConfusionMatrixDisplay.from_predictions(
         y_test, test_probability >= threshold, cmap="Blues"
     )
@@ -106,6 +82,44 @@ def save_feature_importance(model: Pipeline, output: Path):
     ).to_csv(output / "feature_importance.csv", index=False)
 
 
+def save_model_comparison_plot(comparison: pd.DataFrame, output: Path) -> None:
+    """후보 모델의 검증 성능을 하나의 막대그래프로 비교한다."""
+    metrics_to_plot = ["accuracy", "precision", "recall", "f1"]
+    plot_data = comparison.set_index("model")[metrics_to_plot].transpose()
+    ax = plot_data.plot(kind="bar", figsize=(12, 6), width=0.75)
+    ax.set_title("Validation performance by model")
+    ax.set_xlabel("Metric")
+    ax.set_ylabel("Score")
+    ax.set_ylim(0, 1)
+    ax.tick_params(axis="x", rotation=0)
+    ax.legend(title="Model")
+    ax.grid(axis="y", alpha=0.25)
+    plt.tight_layout()
+    plt.savefig(output / "model_comparison.png", dpi=160)
+    plt.close()
+
+
+def save_classification_details(y_test, test_probability, threshold: float, output: Path) -> None:
+    """테스트 Classification Report와 혼동행렬 원본 수치를 저장한다."""
+    predicted = (test_probability >= threshold).astype(int)
+    report = classification_report(
+        y_test,
+        predicted,
+        labels=[0, 1],
+        target_names=["Not canceled", "Canceled"],
+        output_dict=True,
+        zero_division=0,
+    )
+    pd.DataFrame(report).transpose().to_csv(output / "classification_report.csv")
+
+    matrix = confusion_matrix(y_test, predicted, labels=[0, 1])
+    pd.DataFrame(
+        matrix,
+        index=["actual_not_canceled", "actual_canceled"],
+        columns=["predicted_not_canceled", "predicted_canceled"],
+    ).to_csv(output / "confusion_matrix.csv")
+
+
 def save_results(
     model: Pipeline,
     model_name: str,
@@ -124,7 +138,7 @@ def save_results(
 
     report = {
         "selected_model": model_name,
-        "selection_rule": "highest validation PR-AUC, then F1",
+        "selection_rule": "highest validation F1, then Accuracy",
         "validation": calculate_metrics(y_valid, valid_probability, threshold),
         "test": calculate_metrics(y_test, test_probability, threshold),
     }
@@ -143,6 +157,8 @@ def save_results(
     (output / "metrics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     (output / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     save_feature_importance(model, output)
+    save_model_comparison_plot(comparison, output)
+    save_classification_details(y_test, test_probability, threshold, output)
     save_plots(
         y_valid,
         valid_probability,
@@ -152,4 +168,3 @@ def save_results(
         output,
     )
     return report
-

@@ -27,7 +27,7 @@
 - 회귀: 객실요금처럼 연속적인 숫자를 예측하는 문제가 아니므로 해당하지 않음
 - 군집: 정답 없이 비슷한 예약을 묶는 문제가 아니므로 해당하지 않음
 
-비교 모델로 Logistic Regression과 Random Forest Classifier를 사용하며, 검증 PR-AUC가 더 높은 모델을 최종 선택합니다.
+비교 모델로 Logistic Regression과 Random Forest Classifier를 사용하며, 검증 F1이 더 높은 모델을 최종 선택합니다. F1이 같으면 Accuracy를 비교합니다.
 
 ## 데이터 출처
 
@@ -47,8 +47,9 @@
 - 미래 정보가 과거 학습에 섞이지 않도록 도착일 기준 시간순 분할(학습 70% / 검증 15% / 테스트 15%)
 - 예약 결과를 사후에 알려주는 `reservation_status`, `reservation_status_date` 제거
 - Logistic Regression과 Random Forest 비교
-- 검증 세트에서 F1 기준으로 의사결정 임계값 선택 후 테스트 세트는 한 번만 평가
-- PR-AUC, ROC-AUC, Precision, Recall, F1, 혼동행렬과 변수 중요도 저장
+- 기본 분류 기준 0.5를 사용하고, 검증 F1으로 모델을 선택한 후 테스트 세트는 한 번만 평가
+- Accuracy, Precision, Recall, F1, 혼동행렬, Classification Report 저장
+- 후보 모델 성능 비교 표·그래프와 변수 중요도 저장
 
 ## 전체 실행 흐름
 
@@ -76,8 +77,9 @@ data/raw/hotel_bookings.csv
 | `src/train.py` | 아래 모듈을 순서대로 호출하는 학습 시작 파일 |
 | `src/data.py` | CSV 로딩, City Hotel 추출, 누수 변수 제거, 시간순 데이터 분할 |
 | `src/data_profile.py` | `head`, `info`, `describe`, `shape`, 결측값과 중복값 점검 |
+| `src/eda.py` | 특성·타겟 분포, 상관관계와 변수별 취소율 분석·시각화 |
 | `src/models.py` | 결측치 처리, 원-핫 인코딩, Logistic Regression·Random Forest 학습 |
-| `src/evaluation.py` | 지표 계산, 임계값 결정, 최종 모델 선택, 결과 파일 저장 |
+| `src/evaluation.py` | 지표 계산, 최종 모델 선택, 결과 파일·그래프 저장 |
 | `src/predict.py` | 학습된 모델을 실제 신규 예약 CSV에 적용할 때 사용 |
 | `dashboard.py` | 이미 저장된 평가 결과를 웹 화면으로 표시 |
 | `requirements.txt` | 실행에 필요한 Python 패키지 목록 |
@@ -131,12 +133,13 @@ pip install -r requirements.txt
 내부적으로 다음 순서가 자동 실행됩니다.
 
 1. `head`, `info`, `describe`, `shape`, 결측값과 중복값 확인
-2. 전체 데이터에서 City Hotel 79,330건 추출
-3. 도착일 기준 학습 70%, 검증 15%, 테스트 15% 분할
-4. 두 후보 모델 학습 및 검증 성능 비교
-5. 검증 데이터에서 F1 임계값 결정
-6. 테스트 데이터 최종 평가
-7. 모델·지표·그래프를 `outputs/model/`에 저장
+2. 특성·타겟 분포와 변수 간·타겟 간 관계를 EDA로 분석
+3. 전체 데이터에서 City Hotel 79,330건 추출
+4. 도착일 기준 학습 70%, 검증 15%, 테스트 15% 분할
+5. 두 후보 모델 학습 및 검증 성능 비교
+6. 검증 F1과 Accuracy로 최종 모델 선택
+7. 테스트 데이터 최종 평가
+8. 모델·지표·그래프를 `outputs/model/`에 저장
 
 ## 데이터 기본 정보 확인
 
@@ -151,6 +154,31 @@ pip install -r requirements.txt
 | `city_hotel_missing_values.csv` | 열별 결측값 개수와 비율 |
 
 중복 행은 개수만 확인하고 자동 삭제하지 않습니다. 익명화된 데이터에는 서로 다른 예약이 동일한 값 조합으로 보일 수 있으므로, 중복이라는 이유만으로 삭제하면 실제 예약을 잃을 수 있기 때문입니다.
+
+## 탐색적 데이터 분석 (EDA)
+
+City Hotel 데이터만 대상으로 다음 분석을 수행하며 결과는 `outputs/eda/`에 저장됩니다.
+
+- 타겟 분포: 취소·비취소 건수와 비율
+- 숫자 특성 분포: 리드타임, ADR, 특별 요청 수, 과거 취소 횟수, 숙박일 수
+- 범주 특성 분포: 보증금, 시장 세그먼트, 고객 유형, 도착 월, 국가, 식사 유형
+- 변수 간 상관관계: 주요 숫자 변수의 Pearson 상관계수와 히트맵
+- 변수와 타겟 간 관계: 범주 및 구간별 취소율
+
+```text
+outputs/eda/
+├─ target_distribution.csv / .png
+├─ numeric_summary.csv
+├─ numeric_distributions.png
+├─ categorical_distributions.png
+├─ correlation_matrix.csv
+├─ correlation_heatmap.png
+├─ target_numeric_correlations.csv
+├─ target_relationships.csv
+└─ target_relationships.png
+```
+
+상관관계는 변수 간 선형 관계를 나타낼 뿐 인과관계를 의미하지 않습니다. Random Forest 변수 중요도와도 다른 개념입니다.
 
 빠른 동작 확인은 소규모 샘플로 실행합니다. 이 결과는 실제 성능으로 해석하지 않습니다.
 
@@ -168,7 +196,7 @@ pip install -r requirements.txt
 .venv\Scripts\streamlit.exe run dashboard.py
 ```
 
-기본 주소는 `http://localhost:8501`입니다. 성능 요약, 모델 비교, 혼동행렬, PR 곡선, 주요 변수를 한 화면에서 확인할 수 있습니다.
+기본 주소는 `http://localhost:8501`입니다. EDA, 성능 요약, 모델 비교, 혼동행렬, Classification Report, 주요 변수를 한 화면에서 확인할 수 있습니다.
 
 대시보드는 모델을 다시 학습하지 않습니다. `outputs/model/`에 이미 저장된 결과 파일을 읽어 화면에 표시하므로 빠르게 실행됩니다. 데이터나 모델을 변경했다면 `train.py`를 먼저 다시 실행해야 합니다.
 
@@ -176,14 +204,12 @@ pip install -r requirements.txt
 
 | 지표 | 의미 |
 |---|---|
-| PR-AUC | 여러 임계값에서 Precision과 Recall의 전반적인 균형 |
-| ROC-AUC | 취소 예약에 정상 예약보다 높은 위험 점수를 부여하는 능력 |
+| Accuracy | 전체 예약 중 취소·비취소를 정확히 맞힌 비율 |
 | Precision | 취소라고 예측한 예약 중 실제 취소 비율 |
 | Recall | 실제 취소 예약 중 모델이 찾아낸 비율 |
 | F1 | Precision과 Recall의 조화 평균 |
-| 판단 임계값 | 이 확률 이상이면 취소 위험으로 분류하는 기준 |
 
-현재 테스트 결과는 PR-AUC 0.824, ROC-AUC 0.867, Precision 0.684, Recall 0.803, F1 0.739입니다.
+Classification Report에서는 취소·비취소 클래스별 Precision, Recall, F1-Score와 건수를 함께 확인합니다. 이 프로젝트는 분류 문제이므로 MAE, MSE, RMSE, R² 같은 회귀 지표와 Inertia, Silhouette Score 같은 군집 지표는 사용하지 않습니다.
 
 ## 학습 결과 파일
 
@@ -191,12 +217,14 @@ pip install -r requirements.txt
 
 ```text
 model.joblib                 학습된 전처리+모델
-metadata.json                임계값, 입력 변수, 데이터 기간
+metadata.json                모델 설정, 입력 변수, 데이터 기간
 metrics.json                 검증/테스트 성능
 model_comparison.csv         후보 모델 비교
+model_comparison.png         후보 모델 평가 지표 비교 그래프
 feature_importance.csv       주요 예측 변수
 confusion_matrix.png         테스트 혼동행렬
-precision_recall_curve.png   검증 PR 곡선 및 선택 임계값
+confusion_matrix.csv         테스트 혼동행렬 원본 수치
+classification_report.csv    클래스별 Precision·Recall·F1-Score
 ```
 
 ## 새 예약 예측
@@ -213,4 +241,4 @@ precision_recall_curve.png   검증 PR 곡선 및 선택 임계값
 
 ## 운영 시 유의점
 
-이 모델은 연구용 익명 데이터의 과거 패턴을 학습합니다. 실제 운영 전에는 최근 Lisbon 호텔 데이터로 재학습하고, 잘못된 개입 비용을 반영해 임계값을 다시 정해야 합니다. 모델 점수는 자동 취소나 고객 차별이 아니라 보증금 안내, 리마인더 등 저위험 개입의 우선순위로 사용하는 것이 적절합니다.
+이 모델은 연구용 익명 데이터의 과거 패턴을 학습합니다. 실제 운영 전에는 최근 Lisbon 호텔 데이터로 재학습해야 합니다. 모델 점수는 자동 취소나 고객 차별이 아니라 리마인더 등 저위험 개입의 우선순위로 사용하는 것이 적절합니다.

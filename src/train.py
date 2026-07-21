@@ -8,7 +8,8 @@ from pathlib import Path
 
 from data import LEAKAGE_COLUMNS, chronological_split, load_city_hotel
 from data_profile import create_data_profile
-from evaluation import find_best_threshold, save_results, select_best_model
+from eda import generate_eda
+from evaluation import save_results, select_best_model
 from models import fit_candidates
 
 
@@ -29,23 +30,27 @@ def main() -> None:
     profile_output = args.output.parent / "data_profile"
     create_data_profile(args.data, profile_output)
 
-    # 2. Lisbon City Hotel 데이터만 불러오고 시간순으로 나눈다.
+    # 2. 특성·타겟 분포, 상관관계와 변수별 취소율을 분석한다.
+    eda_output = args.output.parent / "eda"
+    generate_eda(args.data, eda_output)
+
+    # 3. Lisbon City Hotel 데이터만 불러오고 시간순으로 나눈다.
     x, y = load_city_hotel(args.data)
     split = chronological_split(x, y)
     x_train, y_train, x_valid, y_valid, x_test, y_test = split
 
-    # 3. 후보 모델을 학습하고 검증 성능이 가장 좋은 모델을 선택한다.
+    # 4. 후보 모델을 학습하고 검증 성능이 가장 좋은 모델을 선택한다.
     fitted_models = fit_candidates(x_train, y_train, args.random_state)
     model_name, model, comparison = select_best_model(
         fitted_models, x_valid, y_valid
     )
 
-    # 4. 검증 데이터로 판단 임계값을 정한 뒤 테스트 데이터를 평가한다.
+    # 5. 기본 분류 임계값 0.5로 테스트 데이터를 평가한다.
     valid_probability = model.predict_proba(x_valid)[:, 1]
-    threshold = find_best_threshold(y_valid, valid_probability)
+    threshold = 0.5
     test_probability = model.predict_proba(x_test)[:, 1]
 
-    # 5. 모델, 지표, 메타데이터, 중요도와 그래프를 저장한다.
+    # 6. 모델, 지표, 메타데이터, 중요도와 그래프를 저장한다.
     report = save_results(
         model=model,
         model_name=model_name,

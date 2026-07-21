@@ -1,7 +1,7 @@
 """Lisbon City Hotel 취소 예측 결과를 보여주는 Streamlit 웹 대시보드.
 
 학습 과정에서 생성된 JSON, CSV, PNG 결과를 읽어 성능 지표,
-모델 비교, 혼동행렬, PR 곡선과 변수 중요도를 웹 화면에 표시한다.
+모델 비교, 혼동행렬, 분류 보고서와 변수 중요도를 웹 화면에 표시한다.
 대시보드는 모델을 다시 학습하지 않으므로 빠르게 실행된다.
 """
 
@@ -14,6 +14,14 @@ import pandas as pd
 import streamlit as st
 
 RESULT_DIR = Path("outputs/model")
+EDA_DIR = Path("outputs/eda")
+
+
+def show_centered_image(path: Path, width: int) -> None:
+    """그래프가 화면 전체를 과도하게 채우지 않도록 중앙에 제한된 크기로 표시한다."""
+    if path.exists():
+        with st.container(horizontal_alignment="center"):
+            st.image(str(path), width=width)
 
 # 원본 변수 이름을 대시보드에서 이해하기 쉬운 한국어와 설명으로 바꾼다.
 FEATURE_INFO = {
@@ -119,19 +127,60 @@ comparison = pd.read_csv(RESULT_DIR / "model_comparison.csv")
 importance = pd.read_csv(RESULT_DIR / "feature_importance.csv")
 test = metrics["test"]
 
+# 모델 결과를 보기 전에 City Hotel 원본 데이터의 분포와 관계를 먼저 확인한다.
+st.subheader("탐색적 데이터 분석 (EDA)")
+eda_required = [
+    "target_distribution.png",
+    "numeric_distributions.png",
+    "categorical_distributions.png",
+    "correlation_heatmap.png",
+    "target_relationships.png",
+]
+eda_missing = [name for name in eda_required if not (EDA_DIR / name).exists()]
+if eda_missing:
+    st.warning("EDA 결과가 없습니다. `python src/train.py`를 다시 실행해 주세요.")
+else:
+    target_tab, numeric_tab, category_tab, corr_tab, relation_tab = st.tabs(
+        ["타겟 분포", "숫자 특성", "범주 특성", "상관관계", "특성과 취소율"]
+    )
+    with target_tab:
+        show_centered_image(EDA_DIR / "target_distribution.png", width=620)
+        target_distribution = pd.read_csv(EDA_DIR / "target_distribution.csv")
+        canceled = target_distribution.loc[target_distribution["target"].eq(1)].iloc[0]
+        st.caption(
+            f"City Hotel 전체 예약 중 취소는 {int(canceled['count']):,}건이며, "
+            f"취소율은 {canceled['rate']:.1%}입니다."
+        )
+    with numeric_tab:
+        show_centered_image(EDA_DIR / "numeric_distributions.png", width=900)
+        st.caption("극단값 때문에 전체 모양이 가려지지 않도록 각 숫자 변수의 99백분위수까지 표시합니다.")
+    with category_tab:
+        show_centered_image(EDA_DIR / "categorical_distributions.png", width=900)
+        st.caption("보증금, 예약 시장, 고객 유형, 도착 월, 주요 국가와 식사 유형의 예약 건수입니다.")
+    with corr_tab:
+        show_centered_image(EDA_DIR / "correlation_heatmap.png", width=760)
+        target_corr = pd.read_csv(EDA_DIR / "target_numeric_correlations.csv")
+        target_corr.columns = ["숫자 변수", "취소 여부와 상관계수"]
+        st.dataframe(
+            target_corr.style.format({"취소 여부와 상관계수": "{:.3f}"}),
+            width="stretch",
+            hide_index=True,
+        )
+        st.caption("상관계수는 -1~1이며 절댓값이 클수록 선형 관계가 강합니다. 상관관계는 인과관계를 뜻하지 않습니다.")
+    with relation_tab:
+        show_centered_image(EDA_DIR / "target_relationships.png", width=900)
+        st.caption("보증금 유형, 예약 시장, 고객 유형, 도착 월, 리드타임 구간과 특별 요청 수별 취소율입니다.")
+
 # 최종 판단에는 모델 선택에 사용하지 않은 테스트 지표를 표시한다.
 st.subheader("테스트 성능")
-cols = st.columns(6)
-values = [
-    ("PR-AUC", test["pr_auc"]),
-    ("ROC-AUC", test["roc_auc"]),
-    ("Precision", test["precision"]),
-    ("Recall", test["recall"]),
-    ("F1", test["f1"]),
-    ("판단 임계값", test["threshold"]),
-]
-for col, (label, value) in zip(cols, values):
-    col.metric(label, f"{value:.3f}")
+with st.container(horizontal=True):
+    for label, key in [
+        ("Accuracy", "accuracy"),
+        ("Precision", "precision"),
+        ("Recall", "recall"),
+        ("F1", "f1"),
+    ]:
+        st.metric(label, f"{test[key]:.3f}", border=True)
 
 st.info(
     f"선정 모델은 {metrics['selected_model'].replace('_', ' ').title()}입니다. "
@@ -139,36 +188,65 @@ st.info(
     f"취소 예측 중 {test['precision']:.1%}가 실제 취소였습니다."
 )
 
-# 넓은 화면에서 두 진단 그래프를 나란히 배치한다.
-left, right = st.columns(2)
-with left:
-    st.subheader("혼동행렬")
-    matrix_path = RESULT_DIR / "confusion_matrix.png"
-    if matrix_path.exists():
-        st.image(str(matrix_path), width="stretch")
-with right:
-    st.subheader("Precision–Recall 곡선")
-    curve_path = RESULT_DIR / "precision_recall_curve.png"
-    if curve_path.exists():
-        st.image(str(curve_path), width="stretch")
+st.subheader("혼동행렬")
+matrix_path = RESULT_DIR / "confusion_matrix.png"
+show_centered_image(matrix_path, width=560)
 
 # 내부 영문 열 이름을 사용자가 읽기 쉬운 이름으로 바꾼다.
 st.subheader("후보 모델 비교")
 display_comparison = comparison.rename(
     columns={
-        "model": "모델", "pr_auc": "PR-AUC", "roc_auc": "ROC-AUC",
+        "model": "모델",
+        "accuracy": "Accuracy",
         "precision": "Precision", "recall": "Recall", "f1": "F1",
-        "threshold": "임계값", "rows": "검증 건수", "cancellation_rate": "취소율",
+        "rows": "검증 건수", "cancellation_rate": "취소율",
     }
 )
 st.dataframe(
     display_comparison.style.format({
-        "PR-AUC": "{:.3f}", "ROC-AUC": "{:.3f}", "Precision": "{:.3f}",
-        "Recall": "{:.3f}", "F1": "{:.3f}", "임계값": "{:.3f}", "취소율": "{:.1%}",
+        "Accuracy": "{:.3f}", "Precision": "{:.3f}",
+        "Recall": "{:.3f}", "F1": "{:.3f}", "취소율": "{:.1%}",
     }),
     width="stretch",
     hide_index=True,
 )
+
+comparison_plot = RESULT_DIR / "model_comparison.png"
+show_centered_image(comparison_plot, width=760)
+
+st.subheader("최종 분류 결과")
+report_path = RESULT_DIR / "classification_report.csv"
+matrix_csv_path = RESULT_DIR / "confusion_matrix.csv"
+if report_path.exists() and matrix_csv_path.exists():
+    report_table = pd.read_csv(report_path, index_col=0).reset_index().rename(
+        columns={
+            "index": "구분",
+            "precision": "Precision",
+            "recall": "Recall",
+            "f1-score": "F1-Score",
+            "support": "건수",
+        }
+    )
+    st.dataframe(
+        report_table.style.format(
+            {
+                "Precision": "{:.3f}",
+                "Recall": "{:.3f}",
+                "F1-Score": "{:.3f}",
+                "건수": "{:.0f}",
+            }
+        ),
+        width="stretch",
+        hide_index=True,
+    )
+    class_scores = report_table.loc[
+        report_table["구분"].isin(["Not canceled", "Canceled"]),
+        ["구분", "Precision", "Recall", "F1-Score"],
+    ].set_index("구분")
+    st.bar_chart(class_scores, height=380)
+    st.caption(
+        "Not canceled와 Canceled 클래스 각각의 Precision, Recall, F1-Score와 데이터 건수입니다."
+    )
 
 # 사용자가 화면에 표시할 변수 개수를 조절할 수 있다.
 st.subheader("주요 예측 변수")

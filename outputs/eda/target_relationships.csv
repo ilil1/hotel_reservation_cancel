@@ -1,0 +1,37 @@
+feature,category,count,cancellation_rate
+deposit_type,No Deposit,66442,0.30468679449745645
+deposit_type,Non Refund,12868,0.9981349082996581
+deposit_type,Refundable,20,0.7
+market_segment,Aviation,237,0.21940928270042195
+market_segment,Complementary,542,0.11808118081180811
+market_segment,Corporate,2986,0.2146684527796383
+market_segment,Direct,6093,0.17331363860167406
+market_segment,Groups,13975,0.6885867620751341
+market_segment,Offline TA/TO,16747,0.4283155191974682
+market_segment,Online TA,38748,0.37398059254671207
+market_segment,Undefined,2,1.0
+customer_type,Contract,2300,0.48043478260869565
+customer_type,Group,293,0.09897610921501707
+customer_type,Transient,59404,0.45616456804255606
+customer_type,Transient-Party,17333,0.28096694167195524
+arrival_date_month,April,7480,0.4632352941176471
+arrival_date_month,August,8983,0.4009796281865746
+arrival_date_month,December,4132,0.42110358180058083
+arrival_date_month,February,4965,0.38288016112789525
+arrival_date_month,January,3736,0.3966809421841542
+arrival_date_month,July,8088,0.40875370919881304
+arrival_date_month,June,7894,0.4469217126931847
+arrival_date_month,March,6458,0.36946423041189225
+arrival_date_month,May,8232,0.44375607385811466
+arrival_date_month,November,4357,0.3812256139545559
+arrival_date_month,October,7605,0.4297172912557528
+arrival_date_month,September,7400,0.42027027027027025
+lead_time_group,0-7,10808,0.12203923019985197
+lead_time_group,181+,16948,0.6406065612461648
+lead_time_group,31-90,20797,0.39909602346492284
+lead_time_group,8-30,12554,0.309064839891668
+lead_time_group,91-180,18223,0.4799429292652143
+special_requests_group,0,47957,0.5492420293179306
+special_requests_group,1,21420,0.2204014939309057
+special_requests_group,2,8142,0.21358388602309014
+special_requests_group,3+,1811,0.16675869685256764

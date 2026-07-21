@@ -22,7 +22,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path("outputs/predictions.csv"))
     args = parser.parse_args()
 
-    # metadata에는 학습 때 사용한 열과 검증 데이터에서 정한 임계값이 들어 있다.
+    # metadata에는 학습 때 사용한 열과 기본 분류 기준 0.5가 들어 있다.
     model = joblib.load(args.model_dir / "model.joblib")
     metadata = json.loads((args.model_dir / "metadata.json").read_text(encoding="utf-8"))
     frame = pd.read_csv(args.input)
@@ -42,7 +42,7 @@ def main() -> None:
     probability = model.predict_proba(frame[metadata["feature_columns"]])[:, 1]
     result = frame.copy()
     result["cancellation_probability"] = probability
-    # 고정된 0.5가 아니라 검증 단계에서 최적화한 임계값을 사용한다.
+    # 학습 결과와 동일한 기본 분류 기준을 사용한다.
     result["predicted_canceled"] = (probability >= metadata["threshold"]).astype(int)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(args.output, index=False)
