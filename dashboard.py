@@ -1,21 +1,460 @@
-"""Lisbon City Hotel 취소 예측 결과를 보여주는 Streamlit 웹 대시보드.
+"""Lisbon City Hotel 예약 취소 예측 Streamlit 웹 서비스.
 
-학습 과정에서 생성된 JSON, CSV, PNG 결과를 읽어 성능 지표,
-모델 비교, 혼동행렬, 분류 보고서와 변수 중요도를 웹 화면에 표시한다.
-대시보드는 모델을 다시 학습하지 않으므로 빠르게 실행된다.
+왼쪽 메뉴에서 모델 성능 대시보드, 신규 예약 1건 예측,
+CSV 일괄 예측·운영 활용을 선택할 수 있다. 저장된 결과와 최종 모델을 불러오며
+모델을 다시 학습하지 않는다.
 """
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 import json
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
+from src.inference import load_prediction_artifacts, predict_reservations
+from src.operations import (
+    build_arrival_demand_summary,
+    build_reminder_targets,
+)
+
 RESULT_DIR = Path("outputs/model")
 EDA_DIR = Path("outputs/eda")
 
+# 브라우저 탭 제목, 아이콘과 넓은 화면 레이아웃을 지정한다.
+st.set_page_config(page_title="Lisbon Hotel 취소 예측", page_icon="🏨", layout="wide")
+
+
+@st.cache_resource
+def load_web_prediction_artifacts():
+    """화면을 다시 그릴 때마다 모델을 읽지 않도록 메모리에 한 번만 불러온다."""
+    return load_prediction_artifacts(RESULT_DIR)
+
+
+def optional_code(value: str) -> float | None:
+    """사용자가 비워 둔 여행사·기업 코드는 결측값으로 변환한다."""
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    return float(cleaned)
+
+
+def example_reservation() -> dict:
+    """CSV 양식과 예측 화면에서 사용할 예시 City Hotel 예약을 만든다."""
+    return {
+        "reservation_id": "RES-00001",
+        "hotel": "City Hotel",
+        "lead_time": 30,
+        "arrival_date_year": 2017,
+        "arrival_date_month": "August",
+        "arrival_date_week_number": 34,
+        "arrival_date_day_of_month": 20,
+        "stays_in_weekend_nights": 1,
+        "stays_in_week_nights": 2,
+        "adults": 2,
+        "children": 0,
+        "babies": 0,
+        "meal": "BB",
+        "country": "PRT",
+        "market_segment": "Online TA",
+        "distribution_channel": "TA/TO",
+        "is_repeated_guest": 0,
+        "previous_cancellations": 0,
+        "previous_bookings_not_canceled": 0,
+        "reserved_room_type": "A",
+        "booking_changes": 0,
+        "deposit_type": "No Deposit",
+        "agent": 9,
+        "company": None,
+        "days_in_waiting_list": 0,
+        "customer_type": "Transient",
+        "adr": 100.0,
+        "required_car_parking_spaces": 0,
+        "total_of_special_requests": 1,
+    }
+
+
+def show_prediction_result(result: pd.DataFrame, title: str) -> None:
+    """예측 확률과 최종 취소 판정을 한눈에 읽을 수 있게 표시한다."""
+    row = result.iloc[0]
+    probability = float(row["cancellation_probability"])
+    predicted_canceled = int(row["predicted_canceled"])
+    threshold = float(load_web_prediction_artifacts()[1].get("threshold", 0.5))
+
+    st.markdown(f"### {title}")
+    probability_column, decision_column = st.columns(2)
+    with probability_column.container(border=True):
+        st.metric("예상 취소 확률", f"{probability:.1%}")
+        st.caption(f"최종 판단 임계값은 {threshold:.0%}입니다.")
+    with decision_column.container(border=True):
+        st.metric("예측 결과", "취소 가능성이 높음" if predicted_canceled else "정상 유지 가능성이 높음")
+        st.caption("확률이 판단 임계값 이상이면 취소 예상으로 분류합니다.")
+
+    if predicted_canceled:
+        st.warning(
+            "이 예약은 취소 가능성이 높은 예약으로 분류되었습니다. "
+            "고객 확인이나 예약 리마인더의 우선순위를 정하는 참고값으로 사용하세요."
+        )
+    else:
+        st.success("이 예약은 현재 입력값을 기준으로 정상 유지 가능성이 높은 예약입니다.")
+
+
+def render_single_prediction_page() -> None:
+    """신규 예약 한 건을 입력받아 즉시 취소 가능성을 예측한다."""
+    st.title("신규 예약 1건 예측")
+    st.caption("예약 정보를 입력하면 저장된 최종 모델로 취소 확률을 계산합니다.")
+    st.info(
+        "이 모델은 2015~2017년 City Hotel 데이터로 학습되었습니다. "
+        "현재 예약에 적용한 결과는 학습용 예시이므로 의사결정 참고값으로 사용하세요."
+    )
+
+    try:
+        model, metadata = load_web_prediction_artifacts()
+    except FileNotFoundError:
+        st.error("저장된 모델이 없습니다. 먼저 `python src/train.py`를 실행해 주세요.")
+        return
+
+    meal_labels = {
+        "BB": "BB · 조식 포함",
+        "HB": "HB · 조식과 한 끼 포함",
+        "FB": "FB · 세 끼 포함",
+        "SC": "SC · 식사 미포함",
+        "Undefined": "Undefined · 미지정",
+    }
+
+    # 여러 입력값을 한 번에 제출해 입력할 때마다 모델이 반복 실행되지 않게 한다.
+    with st.form("single_reservation_form"):
+        st.markdown("### 숙박 정보")
+        arrival_column, room_column, price_column = st.columns(3)
+        with arrival_column:
+            arrival = st.date_input("도착 예정일", value=date.today() + timedelta(days=30))
+        with room_column:
+            room_type = st.selectbox("예약 객실 유형", list("ABCDEFGHLP"))
+        with price_column:
+            adr = st.number_input("1일 평균 객실요금(ADR)", min_value=0.0, value=100.0, step=5.0)
+
+        night_column, guest_column, meal_column = st.columns(3)
+        with night_column:
+            weekend_nights = st.number_input("주말 숙박일", min_value=0, value=1)
+            week_nights = st.number_input("평일 숙박일", min_value=0, value=2)
+        with guest_column:
+            adults = st.number_input("성인 수", min_value=1, value=2)
+            children = st.number_input("어린이 수", min_value=0, value=0)
+            babies = st.number_input("영아 수", min_value=0, value=0)
+        with meal_column:
+            meal = st.selectbox(
+                "식사 유형",
+                list(meal_labels),
+                format_func=lambda value: meal_labels[value],
+            )
+            country = st.text_input("고객 국가 코드", value="PRT", help="예: PRT, GBR, FRA")
+
+        st.markdown("### 예약 조건")
+        market_column, channel_column, customer_column, visit_column = st.columns(4)
+        with market_column:
+            market_segment = st.selectbox(
+                "예약 시장",
+                ["Online TA", "Offline TA/TO", "Direct", "Groups", "Corporate", "Complementary", "Aviation", "Undefined"],
+            )
+        with channel_column:
+            distribution_channel = st.selectbox(
+                "유통 경로", ["TA/TO", "Direct", "Corporate", "GDS", "Undefined"]
+            )
+        with customer_column:
+            customer_type = st.selectbox(
+                "고객 유형", ["Transient", "Transient-Party", "Contract", "Group"]
+            )
+        with visit_column:
+            repeated_guest = st.selectbox(
+                "방문 이력",
+                [0, 1],
+                format_func=lambda value: "재방문 고객" if value else "첫 방문 고객",
+            )
+
+        deposit_column, agent_column, company_column = st.columns(3)
+        with deposit_column:
+            deposit_type = st.selectbox(
+                "보증금 유형", ["No Deposit", "Non Refund", "Refundable"]
+            )
+        with agent_column:
+            agent_code = st.text_input("여행사 코드", value="9", help="직접 예약이면 비워 두세요.")
+        with company_column:
+            company_code = st.text_input("기업 코드", help="기업 예약이 아니면 비워 두세요.")
+
+        st.markdown("### 예약 이력과 요청")
+        history_column, request_column, waiting_column = st.columns(3)
+        with history_column:
+            previous_cancellations = st.number_input("과거 취소 예약 수", min_value=0, value=0)
+            previous_completed = st.number_input("과거 정상 완료 예약 수", min_value=0, value=0)
+        with request_column:
+            booking_changes = st.number_input("예약 변경 횟수", min_value=0, value=0)
+            special_requests = st.number_input("특별 요청 수", min_value=0, value=1)
+        with waiting_column:
+            waiting_days = st.number_input("대기 명단 체류일", min_value=0, value=0)
+            parking_spaces = st.number_input("요청 주차 공간 수", min_value=0, value=0)
+
+        submitted = st.form_submit_button(
+            "취소 가능성 예측", type="primary", icon=":material/analytics:"
+        )
+
+    if submitted:
+        try:
+            lead_time = max((arrival - date.today()).days, 0)
+            reservation = pd.DataFrame(
+                [
+                    {
+                        "hotel": "City Hotel",
+                        "lead_time": lead_time,
+                        "arrival_date_year": arrival.year,
+                        "arrival_date_month": arrival.strftime("%B"),
+                        "arrival_date_week_number": int(arrival.isocalendar().week),
+                        "arrival_date_day_of_month": arrival.day,
+                        "stays_in_weekend_nights": weekend_nights,
+                        "stays_in_week_nights": week_nights,
+                        "adults": adults,
+                        "children": children,
+                        "babies": babies,
+                        "meal": meal,
+                        "country": country.strip().upper(),
+                        "market_segment": market_segment,
+                        "distribution_channel": distribution_channel,
+                        "is_repeated_guest": int(repeated_guest),
+                        "previous_cancellations": previous_cancellations,
+                        "previous_bookings_not_canceled": previous_completed,
+                        "reserved_room_type": room_type,
+                        "booking_changes": booking_changes,
+                        "deposit_type": deposit_type,
+                        "agent": optional_code(agent_code),
+                        "company": optional_code(company_code),
+                        "days_in_waiting_list": waiting_days,
+                        "customer_type": customer_type,
+                        "adr": adr,
+                        "required_car_parking_spaces": parking_spaces,
+                        "total_of_special_requests": special_requests,
+                    }
+                ]
+            )
+            st.session_state["single_prediction_result"] = predict_reservations(
+                reservation, model, metadata
+            )
+        except (TypeError, ValueError) as error:
+            st.error(f"입력값을 확인해 주세요: {error}")
+
+    if "single_prediction_result" in st.session_state:
+        show_prediction_result(st.session_state["single_prediction_result"], "예측 결과")
+
+
+def show_batch_prediction_results(result: pd.DataFrame) -> None:
+    """일괄 예측 요약, 예약별 결과와 전체 결과 다운로드를 표시한다."""
+    display_result = result.copy()
+    display_result["예측 결과"] = display_result["predicted_canceled"].map(
+        {0: "정상 유지 예상", 1: "취소 가능성 높음"}
+    )
+    st.markdown("### 일괄 예측 결과")
+    summary_columns = st.columns(3)
+    summary_columns[0].metric("예측 예약", f"{len(display_result):,}건")
+    summary_columns[1].metric(
+        "취소 예상", f"{int(display_result['predicted_canceled'].sum()):,}건"
+    )
+    summary_columns[2].metric(
+        "평균 취소 확률", f"{display_result['cancellation_probability'].mean():.1%}"
+    )
+
+    display_columns = [
+        column
+        for column in [
+            "reservation_id",
+            "arrival_date_year",
+            "arrival_date_month",
+            "arrival_date_day_of_month",
+            "lead_time",
+            "customer_type",
+            "cancellation_probability",
+            "예측 결과",
+        ]
+        if column in display_result.columns
+    ]
+    st.dataframe(
+        display_result[display_columns],
+        hide_index=True,
+        column_config={
+            "reservation_id": st.column_config.TextColumn("예약 번호", pinned=True),
+            "arrival_date_year": "도착 연도",
+            "arrival_date_month": "도착 월",
+            "arrival_date_day_of_month": "도착 일",
+            "lead_time": "예약 리드타임",
+            "customer_type": "고객 유형",
+            "cancellation_probability": st.column_config.ProgressColumn(
+                "취소 확률", min_value=0.0, max_value=1.0, format="percent"
+            ),
+        },
+    )
+    st.download_button(
+        "전체 예측 결과 내려받기",
+        display_result.to_csv(index=False).encode("utf-8-sig"),
+        file_name="city_hotel_predictions.csv",
+        mime="text/csv",
+        icon=":material/download:",
+    )
+
+
+def render_batch_prediction_page() -> None:
+    """CSV 일괄 예측과 예측 결과를 활용한 운영계획을 한 화면에 표시한다."""
+    st.title("CSV 일괄 예측 및 운영 활용")
+    st.caption(
+        "신규 예약 CSV를 한 번 업로드하면 취소 예측부터 리마인더와 수요관리까지 확인할 수 있습니다."
+    )
+
+    template = pd.DataFrame([example_reservation()])
+    with st.container(border=True):
+        st.markdown("### 1. 입력 양식 준비")
+        st.write("아래 예시 양식을 내려받아 예약별로 한 행씩 입력하세요.")
+        st.download_button(
+            "예시 CSV 내려받기",
+            template.to_csv(index=False).encode("utf-8-sig"),
+            file_name="city_hotel_prediction_template.csv",
+            mime="text/csv",
+            icon=":material/download:",
+        )
+
+    with st.container(border=True):
+        st.markdown("### 2. 작성한 CSV 업로드")
+        uploaded_file = st.file_uploader("신규 예약 CSV", type=["csv"])
+        predict_batch = st.button(
+            "업로드한 예약 예측", type="primary", icon=":material/analytics:", disabled=uploaded_file is None
+        )
+
+    if predict_batch and uploaded_file is not None:
+        try:
+            model, metadata = load_web_prediction_artifacts()
+            uploaded_frame = pd.read_csv(uploaded_file)
+            st.session_state["batch_prediction_result"] = predict_reservations(
+                uploaded_frame, model, metadata
+            )
+        except (FileNotFoundError, TypeError, ValueError, pd.errors.ParserError) as error:
+            st.error(f"CSV를 예측할 수 없습니다: {error}")
+
+    if "batch_prediction_result" not in st.session_state:
+        return
+
+    result = st.session_state["batch_prediction_result"].copy()
+    prediction_tab, reminder_tab, demand_tab = st.tabs(
+        [
+            "예측 결과",
+            "고객 확인·리마인더",
+            "객실 재판매·수요관리",
+        ]
+    )
+    with prediction_tab:
+        show_batch_prediction_results(result)
+    render_operations_page(result, (reminder_tab, demand_tab))
+
+
+def render_operations_page(
+    predictions: pd.DataFrame,
+    operation_tabs: tuple,
+) -> None:
+    """예측 결과를 리마인더와 수요관리 탭에 각각 표시한다."""
+    _, metadata = load_web_prediction_artifacts()
+    threshold = float(metadata.get("threshold", 0.5))
+    reminder_targets = build_reminder_targets(predictions, threshold)
+    demand_summary = build_arrival_demand_summary(predictions, threshold)
+    reminder_tab, demand_tab = operation_tabs
+
+    with reminder_tab:
+        st.markdown("### 취소 위험이 높은 예약 확인")
+        st.write(
+            "최종 판단 임계값 이상인 예약을 고객 확인과 리마인더 발송 검토 대상으로 분류합니다."
+        )
+        total_reservations = len(predictions)
+        target_count = len(reminder_targets)
+        with st.container(horizontal=True):
+            st.metric("전체 예약", f"{total_reservations:,}건", border=True)
+            st.metric("고위험 확인 대상", f"{target_count:,}건", border=True)
+            st.metric(
+                "확인 대상 비율",
+                f"{target_count / total_reservations:.1%}" if total_reservations else "0.0%",
+                border=True,
+            )
+
+        if reminder_targets.empty:
+            st.success("현재 입력 데이터에는 판단 임계값 이상인 고위험 예약이 없습니다.")
+        else:
+            reminder_display = reminder_targets.rename(
+                columns={
+                    "reservation_id": "예약 번호",
+                    "arrival_date": "도착일",
+                    "cancellation_probability": "취소 확률",
+                    "risk_level": "위험 단계",
+                    "reminder_message": "리마인더 문구",
+                }
+            )
+            st.dataframe(
+                reminder_display,
+                hide_index=True,
+                column_config={
+                    "취소 확률": st.column_config.ProgressColumn(
+                        "취소 확률", min_value=0.0, max_value=1.0, format="percent"
+                    ),
+                    "예약 번호": st.column_config.TextColumn("예약 번호", pinned=True),
+                },
+            )
+            st.download_button(
+                "리마인더 대상 목록 내려받기",
+                reminder_display.to_csv(index=False).encode("utf-8-sig"),
+                file_name="reminder_targets.csv",
+                mime="text/csv",
+                icon=":material/download:",
+            )
+
+        st.info(
+            "현재 데이터에는 고객 전화번호·이메일이 없으므로 실제 메시지를 자동 발송하지 않습니다. "
+            "고객 연락처가 있는 예약 시스템과 연결하면 이 대상 목록을 발송 단계로 넘길 수 있습니다."
+        )
+
+    with demand_tab:
+        st.markdown("### 도착일별 예상 취소량과 유지 예약")
+        expected_cancellations = float(predictions["cancellation_probability"].sum())
+        expected_retained = len(predictions) - expected_cancellations
+        high_risk_count = int((predictions["cancellation_probability"] >= threshold).sum())
+        with st.container(horizontal=True):
+            st.metric("현재 예약", f"{len(predictions):,}건", border=True)
+            st.metric("통계적 예상 취소량", f"{expected_cancellations:,.1f}건", border=True)
+            st.metric("예상 유지 예약", f"{expected_retained:,.1f}건", border=True)
+            st.metric("고위험 예약", f"{high_risk_count:,}건", border=True)
+
+        chart_data = demand_summary.rename(
+            columns={"arrival_date": "도착일", "expected_cancellations": "예상 취소량"}
+        )
+        st.bar_chart(chart_data, x="도착일", y="예상 취소량", y_label="예상 취소 예약 수")
+
+        demand_display = demand_summary.rename(
+            columns={
+                "arrival_date": "도착일",
+                "reservations": "전체 예약",
+                "high_risk_reservations": "고위험 예약",
+                "expected_cancellations": "예상 취소량",
+                "expected_retained_reservations": "예상 유지 예약",
+            }
+        )
+        st.dataframe(
+            demand_display,
+            hide_index=True,
+            column_config={"도착일": st.column_config.DateColumn("도착일", pinned=True)},
+        )
+        st.download_button(
+            "수요관리 계획표 내려받기",
+            demand_display.to_csv(index=False).encode("utf-8-sig"),
+            file_name="arrival_demand_plan.csv",
+            mime="text/csv",
+            icon=":material/download:",
+        )
+        st.warning(
+            "예상 취소량은 취소 확률의 합계이며 확정 취소 객실 수가 아닙니다. "
+            "실제 취소 확인, 객실 재고와 초과예약 정책을 함께 검토한 뒤 재판매 계획에 사용하세요."
+        )
 
 def show_centered_image(path: Path, width: int) -> None:
     """그래프가 화면 전체를 과도하게 채우지 않도록 중앙에 제한된 크기로 표시한다."""
@@ -458,20 +897,222 @@ def describe_feature(encoded_name: str) -> tuple[str, str, str]:
 
     return english_name, english_name, "변수 설명이 아직 등록되지 않았습니다."
 
-# 브라우저 탭 제목, 아이콘과 넓은 화면 레이아웃을 지정한다.
-st.set_page_config(page_title="Lisbon Hotel 취소 예측", page_icon="🏨", layout="wide")
-
-# 지표 카드를 구분하기 위한 최소한의 화면 스타일이다.
+# 지표 카드와 왼쪽 배너형 메뉴를 구분하기 위한 화면 스타일이다.
 st.markdown(
     """
     <style>
     .block-container {padding-top: 2rem; padding-bottom: 3rem;}
     [data-testid="stMetric"] {background: #f6f8fb; border: 1px solid #e6e9ef;
         padding: 16px; border-radius: 12px;}
+
+    /* 사이드바 전체에 깊이감 있는 배경과 여백을 적용한다. */
+    [data-testid="stSidebar"] {
+        background:
+            radial-gradient(circle at 15% 5%, rgba(99, 102, 241, 0.22), transparent 28%),
+            linear-gradient(180deg, #111a2e 0%, #0b1220 100%);
+        border-right: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        padding: 1.35rem 1rem 1.2rem;
+    }
+
+    /* 호텔명과 서비스 성격을 보여주는 상단 브랜드 카드이다. */
+    .sidebar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 2px 0 26px;
+        padding: 15px;
+        border: 1px solid rgba(165, 180, 252, 0.18);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.055);
+        box-shadow: 0 14px 32px rgba(2, 6, 23, 0.2);
+        backdrop-filter: blur(12px);
+    }
+    .sidebar-brand-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 14px;
+        letter-spacing: -0.02em;
+        border-radius: 13px;
+        background: linear-gradient(145deg, #818cf8, #4f46e5);
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.38);
+    }
+    .sidebar-brand-title {
+        color: #f8fafc;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+    .sidebar-brand-subtitle {
+        margin-top: 4px;
+        color: #94a3b8;
+        font-size: 11.5px;
+        line-height: 1.3;
+    }
+    .sidebar-menu-label {
+        margin: 0 4px 10px;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+    }
+
+    /* 기본 라디오 모양을 숨기고 메뉴 하나를 클릭 가능한 카드처럼 보이게 한다. */
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stRadio"]) {
+        width: 100% !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] {
+        width: 100%;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] {
+        width: 100%;
+        align-items: stretch;
+        gap: 8px;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label {
+        position: relative;
+        display: flex;
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 48px;
+        padding: 13px 14px;
+        margin: 0;
+        color: #cbd5e1;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(2, 6, 23, 0.08);
+        transition: transform 160ms ease, border-color 160ms ease,
+            background 160ms ease, box-shadow 160ms ease;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label:hover {
+        transform: translateX(3px);
+        border-color: rgba(129, 140, 248, 0.45);
+        background: rgba(129, 140, 248, 0.10);
+        box-shadow: 0 8px 20px rgba(2, 6, 23, 0.16);
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+        color: #ffffff;
+        border-color: rgba(165, 180, 252, 0.72);
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 58%, #4338ca 100%);
+        box-shadow: 0 12px 26px rgba(79, 70, 229, 0.34);
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked)::after {
+        position: absolute;
+        top: 50%;
+        right: 13px;
+        width: 6px;
+        height: 6px;
+        content: "";
+        border-radius: 999px;
+        background: #c7d2fe;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.13);
+        transform: translateY(-50%);
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label > div,
+    [data-testid="stSidebar"] [role="radiogroup"] label > div > div {
+        width: 100%;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label > div > div > div:first-child {
+        display: none;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label p {
+        color: inherit;
+        font-size: 13.5px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p {
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    /* 하단에는 현재 사용 중인 최종 모델 정보를 작게 고정한다. */
+    .sidebar-model-card {
+        margin-top: 26px;
+        padding: 13px 14px;
+        color: #94a3b8;
+        font-size: 11px;
+        line-height: 1.55;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 12px;
+        background: rgba(2, 6, 23, 0.24);
+    }
+    .sidebar-model-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 5px;
+        color: #e2e8f0;
+        font-size: 11.5px;
+        font-weight: 700;
+    }
+    .sidebar-status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: #34d399;
+        box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.12);
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+# 왼쪽 메뉴에서 필요한 화면만 실행해 예측과 대시보드 계산이 서로 섞이지 않게 한다.
+with st.sidebar:
+    st.markdown(
+        """
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">LH</div>
+            <div>
+                <div class="sidebar-brand-title">Lisbon City Hotel</div>
+                <div class="sidebar-brand-subtitle">예약 취소 예측 서비스</div>
+            </div>
+        </div>
+        <div class="sidebar-menu-label">WORKSPACE</div>
+        """,
+        unsafe_allow_html=True,
+    )
+    navigation_labels = {
+        "모델 성능 대시보드": ":material/monitoring:  모델 성능 대시보드",
+        "신규 예약 1건 예측": ":material/person_search:  신규 예약 1건 예측",
+        "CSV 일괄 예측 및 운영 활용": ":material/domain:  CSV 예측·운영 활용",
+    }
+    selected_page = st.radio(
+        "화면 선택",
+        list(navigation_labels),
+        format_func=navigation_labels.get,
+        label_visibility="collapsed",
+    )
+    st.markdown(
+        """
+        <div class="sidebar-model-card">
+            <div class="sidebar-model-title">
+                <span class="sidebar-status-dot"></span>
+                최종 모델 준비됨
+            </div>
+            Logistic Regression<br>
+            RandomizedSearchCV
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+if selected_page == "신규 예약 1건 예측":
+    render_single_prediction_page()
+    st.stop()
+
+if selected_page == "CSV 일괄 예측 및 운영 활용":
+    render_batch_prediction_page()
+    st.stop()
 
 st.title("🏨 Lisbon City Hotel 예약 취소 예측")
 st.caption("2015-07-01 ~ 2017-08-31 · City Hotel 79,330건 · 시간순 검증")

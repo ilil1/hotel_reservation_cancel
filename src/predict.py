@@ -7,13 +7,11 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
-import joblib
 import pandas as pd
 
-from features import add_engineered_features
+from inference import load_prediction_artifacts, predict_reservations
 
 
 def main() -> None:
@@ -24,30 +22,10 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path("outputs/predictions.csv"))
     args = parser.parse_args()
 
-    # metadata에는 학습 때 사용한 열과 기본 분류 기준 0.5가 들어 있다.
-    model = joblib.load(args.model_dir / "model.joblib")
-    metadata = json.loads((args.model_dir / "metadata.json").read_text(encoding="utf-8"))
+    # 웹 예측 화면과 동일한 공통 추론 파이프라인을 사용한다.
+    model, metadata = load_prediction_artifacts(args.model_dir)
     frame = pd.read_csv(args.input)
-    # 전체 호텔 파일을 입력해도 City Hotel 행만 예측 대상으로 남긴다.
-    if "hotel" in frame.columns:
-        frame = frame.loc[frame["hotel"].eq("City Hotel")].copy()
-    # 학습 파이프라인의 입력 형태와 동일하게 도착일 열을 재구성한다.
-    frame["arrival_date"] = pd.to_datetime(
-        frame["arrival_date_year"].astype(str) + "-" + frame["arrival_date_month"].astype(str)
-        + "-" + frame["arrival_date_day_of_month"].astype(str), errors="raise"
-    )
-    # 학습 때와 동일한 Feature Engineering을 신규 예약에도 적용한다.
-    frame = add_engineered_features(frame)
-    required = metadata["feature_columns"]
-    missing = sorted(set(required) - set(frame.columns))
-    if missing:
-        raise ValueError(f"Missing model input columns after feature engineering: {missing}")
-    # predict_proba의 두 번째 열은 클래스 1, 즉 취소 확률이다.
-    probability = model.predict_proba(frame[metadata["feature_columns"]])[:, 1]
-    result = frame.copy()
-    result["cancellation_probability"] = probability
-    # 학습 결과와 동일한 기본 분류 기준을 사용한다.
-    result["predicted_canceled"] = (probability >= metadata["threshold"]).astype(int)
+    result = predict_reservations(frame, model, metadata)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(args.output, index=False)
     print(f"Saved {len(result):,} predictions to {args.output}")
