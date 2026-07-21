@@ -416,6 +416,12 @@ def render_operations_page(
 
     with demand_tab:
         st.markdown("### 도착일별 예상 취소량과 유지 예약")
+        st.info(
+            "여기서 '건'은 확정된 예약 건수를 뜻하지 않고, 각 예약의 예측 확률을 더한 "
+            "**통계적 기대값**입니다. 예를 들어 예약 2건의 취소 확률이 각각 60%라면 "
+            "예상 취소량은 1.2건(0.6 + 0.6)으로 표시됩니다. 예상 유지 예약도 각 예약의 "
+            "유지 확률(1 - 취소 확률)을 같은 방식으로 더하므로 소수로 표시될 수 있습니다."
+        )
         expected_cancellations = float(predictions["cancellation_probability"].sum())
         expected_retained = len(predictions) - expected_cancellations
         high_risk_count = int((predictions["cancellation_probability"] >= threshold).sum())
