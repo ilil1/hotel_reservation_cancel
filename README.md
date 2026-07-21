@@ -24,8 +24,6 @@
 이 프로젝트는 지도학습 기반 **이진 분류(Binary Classification)** 문제입니다. 입력 변수로 각 예약의 취소 확률을 계산한 뒤, 판단 임계값 이상이면 취소 위험 예약인 `1`, 미만이면 비취소 예약인 `0`으로 분류합니다.
 
 - 분류: 정답이 `취소(1)` 또는 `비취소(0)`이므로 해당
-- 회귀: 객실요금처럼 연속적인 숫자를 예측하는 문제가 아니므로 해당하지 않음
-- 군집: 정답 없이 비슷한 예약을 묶는 문제가 아니므로 해당하지 않음
 
 비교 모델로 Logistic Regression과 Random Forest Classifier를 사용하며, 검증 F1이 더 높은 모델을 최종 선택합니다. F1이 같으면 Accuracy를 비교합니다.
 
@@ -209,7 +207,7 @@ outputs/eda/
 | Recall | 실제 취소 예약 중 모델이 찾아낸 비율 |
 | F1 | Precision과 Recall의 조화 평균 |
 
-Classification Report에서는 취소·비취소 클래스별 Precision, Recall, F1-Score와 건수를 함께 확인합니다. 이 프로젝트는 분류 문제이므로 MAE, MSE, RMSE, R² 같은 회귀 지표와 Inertia, Silhouette Score 같은 군집 지표는 사용하지 않습니다.
+Classification Report에서는 취소·비취소 클래스별 Precision, Recall, F1-Score와 건수를 함께 확인합니다.
 
 ## 학습 결과 파일
 
