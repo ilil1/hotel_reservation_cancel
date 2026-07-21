@@ -75,6 +75,7 @@ data/raw/hotel_bookings.csv
 |---|---|
 | `src/train.py` | 아래 모듈을 순서대로 호출하는 학습 시작 파일 |
 | `src/data.py` | CSV 로딩, City Hotel 추출, 누수 변수 제거, 시간순 데이터 분할 |
+| `src/data_profile.py` | `head`, `info`, `describe`, `shape`, 결측값과 중복값 점검 |
 | `src/models.py` | 결측치 처리, 원-핫 인코딩, Logistic Regression·Random Forest 학습 |
 | `src/evaluation.py` | 지표 계산, 임계값 결정, 최종 모델 선택, 결과 파일 저장 |
 | `src/predict.py` | 학습된 모델을 실제 신규 예약 CSV에 적용할 때 사용 |
@@ -129,12 +130,27 @@ pip install -r requirements.txt
 
 내부적으로 다음 순서가 자동 실행됩니다.
 
-1. 전체 데이터에서 City Hotel 79,330건 추출
-2. 도착일 기준 학습 70%, 검증 15%, 테스트 15% 분할
-3. 두 후보 모델 학습 및 검증 성능 비교
-4. 검증 데이터에서 F1 임계값 결정
-5. 테스트 데이터 최종 평가
-6. 모델·지표·그래프를 `outputs/model/`에 저장
+1. `head`, `info`, `describe`, `shape`, 결측값과 중복값 확인
+2. 전체 데이터에서 City Hotel 79,330건 추출
+3. 도착일 기준 학습 70%, 검증 15%, 테스트 15% 분할
+4. 두 후보 모델 학습 및 검증 성능 비교
+5. 검증 데이터에서 F1 임계값 결정
+6. 테스트 데이터 최종 평가
+7. 모델·지표·그래프를 `outputs/model/`에 저장
+
+## 데이터 기본 정보 확인
+
+`train.py`를 실행하면 모델에 사용하는 City Hotel 데이터의 기본 정보가 `outputs/data_profile/`에 자동 저장됩니다.
+
+| 결과 파일 | 내용 |
+|---|---|
+| `overview.json` | City Hotel의 `shape`, 전체 결측값 수, 중복 행 수 |
+| `city_hotel_head.csv` | City Hotel 데이터의 상위 5행 (`head`) |
+| `city_hotel_info.txt` | 열, 자료형, non-null 개수 (`info`) |
+| `city_hotel_describe.csv` | 기술통계 (`describe`) |
+| `city_hotel_missing_values.csv` | 열별 결측값 개수와 비율 |
+
+중복 행은 개수만 확인하고 자동 삭제하지 않습니다. 익명화된 데이터에는 서로 다른 예약이 동일한 값 조합으로 보일 수 있으므로, 중복이라는 이유만으로 삭제하면 실제 예약을 잃을 수 있기 때문입니다.
 
 빠른 동작 확인은 소규모 샘플로 실행합니다. 이 결과는 실제 성능으로 해석하지 않습니다.
 

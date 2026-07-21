@@ -1,0 +1,9 @@
+{
+  "data_path": "data\\raw\\hotel_bookings.csv",
+  "city_hotel": {
+    "rows": 79330,
+    "columns": 32,
+    "duplicate_rows": 25902,
+    "total_missing_values": 83800
+  }
+}

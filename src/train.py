@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from data import LEAKAGE_COLUMNS, chronological_split, load_city_hotel
+from data_profile import create_data_profile
 from evaluation import find_best_threshold, save_results, select_best_model
 from models import fit_candidates
 
@@ -24,23 +25,27 @@ def main() -> None:
     """데이터 준비부터 최종 결과 저장까지 순서대로 실행한다."""
     args = parse_args()
 
-    # 1. Lisbon City Hotel 데이터만 불러오고 시간순으로 나눈다.
+    # 1. head, info, describe, shape, 결측값과 중복값 보고서를 만든다.
+    profile_output = args.output.parent / "data_profile"
+    create_data_profile(args.data, profile_output)
+
+    # 2. Lisbon City Hotel 데이터만 불러오고 시간순으로 나눈다.
     x, y = load_city_hotel(args.data)
     split = chronological_split(x, y)
     x_train, y_train, x_valid, y_valid, x_test, y_test = split
 
-    # 2. 후보 모델을 학습하고 검증 성능이 가장 좋은 모델을 선택한다.
+    # 3. 후보 모델을 학습하고 검증 성능이 가장 좋은 모델을 선택한다.
     fitted_models = fit_candidates(x_train, y_train, args.random_state)
     model_name, model, comparison = select_best_model(
         fitted_models, x_valid, y_valid
     )
 
-    # 3. 검증 데이터로 판단 임계값을 정한 뒤 테스트 데이터를 평가한다.
+    # 4. 검증 데이터로 판단 임계값을 정한 뒤 테스트 데이터를 평가한다.
     valid_probability = model.predict_proba(x_valid)[:, 1]
     threshold = find_best_threshold(y_valid, valid_probability)
     test_probability = model.predict_proba(x_test)[:, 1]
 
-    # 4. 모델, 지표, 메타데이터, 중요도와 그래프를 저장한다.
+    # 5. 모델, 지표, 메타데이터, 중요도와 그래프를 저장한다.
     report = save_results(
         model=model,
         model_name=model_name,
@@ -59,4 +64,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
