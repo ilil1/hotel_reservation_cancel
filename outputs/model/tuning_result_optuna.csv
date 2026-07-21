@@ -1,0 +1,2 @@
+stage,selected_model,accuracy,precision,recall,f1,rows,cancellation_rate
+optuna,logistic_regression_optuna,0.739328,0.631104,0.856282,0.726648,11900,0.404622

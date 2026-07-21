@@ -1,6 +1,6 @@
 {
   "threshold": 0.5,
-  "selected_model": "logistic_regression_randomized_search",
+  "selected_model": "logistic_regression",
   "feature_columns": [
     "lead_time",
     "arrival_date_year",

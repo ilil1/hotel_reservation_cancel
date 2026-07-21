@@ -1,19 +1,19 @@
 {
-  "selected_model": "logistic_regression",
-  "selection_rule": "highest validation F1, then Accuracy",
+  "selected_model": "logistic_regression_randomized_search",
+  "selection_rule": "no candidate reached mean CV Recall 0.80; selected highest mean CV Recall",
   "validation": {
-    "accuracy": 0.793176,
-    "precision": 0.731227,
-    "recall": 0.846981,
-    "f1": 0.784859,
+    "accuracy": 0.79721,
+    "precision": 0.737535,
+    "recall": 0.84566,
+    "f1": 0.787905,
     "rows": 11899,
     "cancellation_rate": 0.445416
   },
   "test": {
-    "accuracy": 0.737311,
-    "precision": 0.628324,
-    "recall": 0.858775,
-    "f1": 0.725693,
+    "accuracy": 0.742185,
+    "precision": 0.634695,
+    "recall": 0.854829,
+    "f1": 0.728496,
     "rows": 11900,
     "cancellation_rate": 0.404622
   }

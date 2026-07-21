@@ -1,0 +1,5 @@
+method,selected_model,accuracy,precision,recall,f1,rows,cancellation_rate
+before_tuning,logistic_regression,0.737311,0.628324,0.858775,0.725693,11900,0.404622
+randomized_search,logistic_regression_randomized_search,0.742185,0.634695,0.854829,0.728496,11900,0.404622
+grid_search,logistic_regression_grid_search,0.739076,0.630694,0.856906,0.7266,11900,0.404622
+optuna,logistic_regression_optuna,0.739328,0.631104,0.856282,0.726648,11900,0.404622

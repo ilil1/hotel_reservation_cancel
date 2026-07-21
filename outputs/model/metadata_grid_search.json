@@ -1,6 +1,6 @@
 {
   "threshold": 0.5,
-  "selected_model": "logistic_regression_randomized_search",
+  "selected_model": "logistic_regression_grid_search",
   "feature_columns": [
     "lead_time",
     "arrival_date_year",
@@ -47,5 +47,6 @@
   ],
   "data_rows": 79330,
   "date_min": "2015-07-01",
-  "date_max": "2017-08-31"
+  "date_max": "2017-08-31",
+  "tuning_stage": "grid_search"
 }

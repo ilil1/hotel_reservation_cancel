@@ -1,0 +1,36 @@
+{
+  "best_params": {
+    "model__class_weight": "balanced",
+    "model__C": 0.1
+  },
+  "best_cv_metrics": {
+    "accuracy": 0.79441,
+    "precision": 0.866316,
+    "recall": 0.605885,
+    "f1": 0.697944
+  },
+  "baseline_params": {
+    "C": 0.5,
+    "class_weight": "balanced"
+  },
+  "parameter_space": {
+    "model__C": [
+      0.03,
+      0.05,
+      0.1,
+      0.25,
+      0.5,
+      1.0,
+      2.0,
+      5.0
+    ],
+    "model__class_weight": [
+      null,
+      "balanced"
+    ]
+  },
+  "search_method": "RandomizedSearchCV",
+  "cv_method": "TimeSeriesSplit(n_splits=3)",
+  "selection_rule": "no candidate reached mean CV Recall 0.80; selected highest mean CV Recall",
+  "trial_count": 8
+}

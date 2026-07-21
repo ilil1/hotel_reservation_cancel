@@ -1,0 +1,3 @@
+stage,selected_model,accuracy,precision,recall,f1,rows,cancellation_rate
+before_feature_engineering,random_forest,0.770756,0.773956,0.612253,0.683673,11900,0.404622
+after_feature_engineering,logistic_regression,0.737311,0.628324,0.858775,0.725693,11900,0.404622

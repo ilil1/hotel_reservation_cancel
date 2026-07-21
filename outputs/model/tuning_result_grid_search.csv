@@ -1,0 +1,2 @@
+stage,selected_model,accuracy,precision,recall,f1,rows,cancellation_rate
+grid_search,logistic_regression_grid_search,0.739076,0.630694,0.856906,0.7266,11900,0.404622

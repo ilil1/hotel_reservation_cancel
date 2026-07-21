@@ -58,6 +58,48 @@ def calculate_metrics(y_true, probability, threshold: float) -> dict[str, float 
     }
 
 
+def save_feature_engineering_comparison(
+    before_report: dict,
+    after_report: dict,
+    output: Path,
+) -> None:
+    """Feature Engineering 전·후의 선택 모델과 테스트 성능을 하나의 CSV로 저장한다."""
+    rows = []
+    for stage, report in [
+        ("before_feature_engineering", before_report),
+        ("after_feature_engineering", after_report),
+    ]:
+        rows.append(
+            {
+                "stage": stage,
+                "selected_model": report["selected_model"],
+                **report["test"],
+            }
+        )
+    pd.DataFrame(rows).to_csv(
+        output / "feature_engineering_comparison.csv", index=False
+    )
+
+
+def save_stage_model_comparisons(
+    before_comparison: pd.DataFrame,
+    after_comparison: pd.DataFrame,
+    output: Path,
+) -> None:
+    """Feature Engineering 전·후의 후보 모델 검증 결과와 그래프를 각각 저장한다."""
+    output.mkdir(parents=True, exist_ok=True)
+    for stage, comparison in [
+        ("before_feature_engineering", before_comparison),
+        ("after_feature_engineering", after_comparison),
+    ]:
+        comparison.to_csv(output / f"model_comparison_{stage}.csv", index=False)
+        save_model_comparison_plot(
+            comparison,
+            output,
+            file_name=f"model_comparison_{stage}",
+        )
+
+
 def select_best_model(fitted_models: dict[str, Pipeline], x_valid, y_valid):
     """기본 임계값 0.5의 검증 F1과 Accuracy로 최종 모델을 선택한다."""
     comparisons = []
@@ -74,18 +116,30 @@ def select_best_model(fitted_models: dict[str, Pipeline], x_valid, y_valid):
     return winner_name, fitted_models[winner_name], table
 
 
-def save_plots(y_valid, valid_probability, threshold, y_test, test_probability, output: Path):
+def save_plots(
+    y_valid,
+    valid_probability,
+    threshold,
+    y_test,
+    test_probability,
+    output: Path,
+    file_suffix: str = "",
+):
     """테스트 혼동행렬을 PNG와 SVG로 저장한다."""
     display = ConfusionMatrixDisplay.from_predictions(
         y_test, test_probability >= threshold, cmap="Blues"
     )
     plt.title("Test confusion matrix")
     plt.tight_layout()
-    _save_figure(display.figure_, output / "confusion_matrix")
+    _save_figure(display.figure_, output / f"confusion_matrix{file_suffix}")
     plt.close(display.figure_)
 
 
-def save_feature_importance(model: Pipeline, output: Path):
+def save_feature_importance(
+    model: Pipeline,
+    output: Path,
+    file_suffix: str = "",
+):
     """트리 중요도 또는 회귀계수 절댓값을 동일한 CSV 형식으로 저장한다."""
     preprocessor = model.named_steps["preprocess"]
     estimator = model.named_steps["model"]
@@ -99,10 +153,14 @@ def save_feature_importance(model: Pipeline, output: Path):
     importance = importance / importance.sum()
     pd.DataFrame({"feature": names, "importance": importance}).sort_values(
         "importance", ascending=False
-    ).to_csv(output / "feature_importance.csv", index=False)
+    ).to_csv(output / f"feature_importance{file_suffix}.csv", index=False)
 
 
-def save_model_comparison_plot(comparison: pd.DataFrame, output: Path) -> None:
+def save_model_comparison_plot(
+    comparison: pd.DataFrame,
+    output: Path,
+    file_name: str = "model_comparison",
+) -> None:
     """후보 모델의 검증 성능을 하나의 막대그래프로 비교한다."""
     metrics_to_plot = ["accuracy", "precision", "recall", "f1"]
     plot_data = comparison.set_index("model")[metrics_to_plot].transpose()
@@ -115,11 +173,17 @@ def save_model_comparison_plot(comparison: pd.DataFrame, output: Path) -> None:
     ax.legend(title="Model")
     ax.grid(axis="y", alpha=0.25)
     plt.tight_layout()
-    _save_figure(ax.figure, output / "model_comparison")
+    _save_figure(ax.figure, output / file_name)
     plt.close(ax.figure)
 
 
-def save_classification_details(y_test, test_probability, threshold: float, output: Path) -> None:
+def save_classification_details(
+    y_test,
+    test_probability,
+    threshold: float,
+    output: Path,
+    file_suffix: str = "",
+) -> None:
     """테스트 Classification Report와 혼동행렬 원본 수치를 저장한다."""
     predicted = (test_probability >= threshold).astype(int)
     report = classification_report(
@@ -130,14 +194,211 @@ def save_classification_details(y_test, test_probability, threshold: float, outp
         output_dict=True,
         zero_division=0,
     )
-    pd.DataFrame(report).transpose().to_csv(output / "classification_report.csv")
+    pd.DataFrame(report).transpose().to_csv(
+        output / f"classification_report{file_suffix}.csv"
+    )
 
     matrix = confusion_matrix(y_test, predicted, labels=[0, 1])
     pd.DataFrame(
         matrix,
         index=["actual_not_canceled", "actual_canceled"],
         columns=["predicted_not_canceled", "predicted_canceled"],
-    ).to_csv(output / "confusion_matrix.csv")
+    ).to_csv(output / f"confusion_matrix{file_suffix}.csv")
+
+
+def save_stage_test_details(before: dict, after: dict, output: Path) -> None:
+    """Feature Engineering 전·후 테스트 혼동행렬과 분류 보고서를 각각 저장한다."""
+    for stage, result in [
+        ("before_feature_engineering", before),
+        ("after_feature_engineering", after),
+    ]:
+        suffix = f"_{stage}"
+        save_classification_details(
+            result["y_test"],
+            result["test_probability"],
+            result["threshold"],
+            output,
+            file_suffix=suffix,
+        )
+        save_plots(
+            result["y_valid"],
+            result["valid_probability"],
+            result["threshold"],
+            result["y_test"],
+            result["test_probability"],
+            output,
+            file_suffix=suffix,
+        )
+
+
+def save_stage_model_details(
+    before: dict,
+    after: dict,
+    x_before: pd.DataFrame,
+    x_after: pd.DataFrame,
+    leakage_columns: set[str],
+    output: Path,
+) -> None:
+    """Feature Engineering 전·후 변수 중요도와 모델 정보를 각각 저장한다."""
+    for stage, result, features in [
+        ("before_feature_engineering", before, x_before),
+        ("after_feature_engineering", after, x_after),
+    ]:
+        suffix = f"_{stage}"
+        save_feature_importance(result["model"], output, file_suffix=suffix)
+        metadata = {
+            "threshold": result["threshold"],
+            "selected_model": result["model_name"],
+            "feature_columns": features.columns.tolist(),
+            "leakage_columns_removed": sorted(leakage_columns),
+            "data_rows": len(features),
+            "date_min": str(features["arrival_date"].min().date()),
+            "date_max": str(features["arrival_date"].max().date()),
+        }
+        (output / f"metadata{suffix}.json").write_text(
+            json.dumps(metadata, indent=2), encoding="utf-8"
+        )
+
+
+def save_tuning_results(
+    before: dict,
+    after: dict,
+    tuning_info: dict,
+    features: pd.DataFrame,
+    leakage_columns: set[str],
+    output: Path,
+) -> None:
+    """하이퍼파라미터 튜닝 전·후의 모델과 모든 평가 결과를 각각 저장한다."""
+    output.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for stage, result in [("before_tuning", before), ("after_tuning", after)]:
+        suffix = f"_{stage}"
+        rows.append(
+            {
+                "stage": stage,
+                "selected_model": result["model_name"],
+                **result["report"]["test"],
+            }
+        )
+        joblib.dump(result["model"], output / f"model{suffix}.joblib")
+        save_feature_importance(result["model"], output, file_suffix=suffix)
+        save_classification_details(
+            result["y_test"],
+            result["test_probability"],
+            result["threshold"],
+            output,
+            file_suffix=suffix,
+        )
+        save_plots(
+            result["y_valid"],
+            result["valid_probability"],
+            result["threshold"],
+            result["y_test"],
+            result["test_probability"],
+            output,
+            file_suffix=suffix,
+        )
+        metadata = {
+            "threshold": result["threshold"],
+            "selected_model": result["model_name"],
+            "feature_columns": features.columns.tolist(),
+            "leakage_columns_removed": sorted(leakage_columns),
+            "data_rows": len(features),
+            "date_min": str(features["arrival_date"].min().date()),
+            "date_max": str(features["arrival_date"].max().date()),
+            "tuning_stage": stage,
+        }
+        (output / f"metadata{suffix}.json").write_text(
+            json.dumps(metadata, indent=2), encoding="utf-8"
+        )
+
+    pd.DataFrame(rows).to_csv(output / "tuning_comparison.csv", index=False)
+    serializable_tuning_info = {
+        key: value for key, value in tuning_info.items() if key != "model"
+    }
+    (output / "tuning_metadata.json").write_text(
+        json.dumps(serializable_tuning_info, indent=2), encoding="utf-8"
+    )
+
+
+def save_named_tuning_result(
+    method_key: str,
+    result: dict,
+    tuning_info: dict,
+    features: pd.DataFrame,
+    leakage_columns: set[str],
+    output: Path,
+) -> None:
+    """GridSearchCV·Optuna 등 추가 튜닝 방법의 모델과 평가 결과를 저장한다."""
+    suffix = f"_{method_key}"
+    joblib.dump(result["model"], output / f"model{suffix}.joblib")
+    save_feature_importance(result["model"], output, file_suffix=suffix)
+    save_classification_details(
+        result["y_test"],
+        result["test_probability"],
+        result["threshold"],
+        output,
+        file_suffix=suffix,
+    )
+    save_plots(
+        result["y_valid"],
+        result["valid_probability"],
+        result["threshold"],
+        result["y_test"],
+        result["test_probability"],
+        output,
+        file_suffix=suffix,
+    )
+    pd.DataFrame(
+        [
+            {
+                "stage": method_key,
+                "selected_model": result["model_name"],
+                **result["report"]["test"],
+            }
+        ]
+    ).to_csv(output / f"tuning_result{suffix}.csv", index=False)
+    metadata = {
+        "threshold": result["threshold"],
+        "selected_model": result["model_name"],
+        "feature_columns": features.columns.tolist(),
+        "leakage_columns_removed": sorted(leakage_columns),
+        "data_rows": len(features),
+        "date_min": str(features["arrival_date"].min().date()),
+        "date_max": str(features["arrival_date"].max().date()),
+        "tuning_stage": method_key,
+    }
+    (output / f"metadata{suffix}.json").write_text(
+        json.dumps(metadata, indent=2), encoding="utf-8"
+    )
+    serializable_info = {key: value for key, value in tuning_info.items() if key != "model"}
+    (output / f"tuning_metadata{suffix}.json").write_text(
+        json.dumps(serializable_info, indent=2), encoding="utf-8"
+    )
+
+
+def save_all_tuning_comparison(
+    baseline: dict,
+    tuned_results: dict[str, dict],
+    output: Path,
+) -> None:
+    """튜닝 전과 세 가지 튜닝 방법의 테스트 성능을 하나의 표로 저장한다."""
+    rows = [
+        {
+            "method": "before_tuning",
+            "selected_model": baseline["model_name"],
+            **baseline["report"]["test"],
+        }
+    ]
+    for method, result in tuned_results.items():
+        rows.append(
+            {
+                "method": method,
+                "selected_model": result["model_name"],
+                **result["report"]["test"],
+            }
+        )
+    pd.DataFrame(rows).to_csv(output / "tuning_methods_comparison.csv", index=False)
 
 
 def save_results(
@@ -152,13 +413,14 @@ def save_results(
     threshold: float,
     leakage_columns: set[str],
     output: Path,
+    selection_rule: str = "highest validation F1, then Accuracy",
 ) -> dict:
     """모델, 성능 지표, 메타데이터, 중요도와 그래프를 저장한다."""
     output.mkdir(parents=True, exist_ok=True)
 
     report = {
         "selected_model": model_name,
-        "selection_rule": "highest validation F1, then Accuracy",
+        "selection_rule": selection_rule,
         "validation": calculate_metrics(y_valid, valid_probability, threshold),
         "test": calculate_metrics(y_test, test_probability, threshold),
     }

@@ -80,6 +80,7 @@ data/raw/hotel_bookings.csv
 | `src/train.py` | 아래 모듈을 순서대로 호출하는 학습 시작 파일 |
 | `src/data.py` | CSV 로딩, City Hotel 추출, 누수 변수 제거, 시간순 데이터 분할 |
 | `src/features.py` | 원본 예약 정보로 Feature Engineering을 수행해 파생 특성 생성 |
+| `src/tuning.py` | RandomizedSearchCV와 TimeSeriesSplit으로 선택 모델의 하이퍼파라미터 탐색 |
 | `src/data_profile.py` | `head`, `info`, `describe`, `shape`, 결측값과 중복값 점검 |
 | `src/eda.py` | 특성·타겟 분포, 상관관계와 변수별 취소율 분석·시각화 |
 | `src/models.py` | 결측치 처리, 원-핫 인코딩, Logistic Regression·Random Forest 학습 |
@@ -139,12 +140,14 @@ pip install -r requirements.txt
 1. `head`, `info`, `describe`, `shape`, 결측값과 중복값 확인
 2. 특성·타겟 분포와 변수 간·타겟 간 관계를 EDA로 분석
 3. 전체 데이터에서 City Hotel 79,330건 추출
-4. 원본 변수로 Feature Engineering을 수행해 9개 파생 특성 추가
-5. 도착일 기준 학습 70%, 검증 15%, 테스트 15% 분할
-6. 두 후보 모델 학습 및 검증 성능 비교
-7. 검증 F1과 Accuracy로 최종 모델 선택
-8. 테스트 데이터 최종 평가
-9. 모델·지표·그래프를 `outputs/model/`에 저장
+4. 도착일 기준 학습 70%, 검증 15%, 테스트 15% 분할
+5. Feature Engineering 전 데이터로 두 후보 모델을 학습·선택·평가
+6. 원본 변수로 Feature Engineering을 수행해 9개 파생 특성 추가
+7. Feature Engineering 후 데이터로 동일한 두 후보 모델을 학습·선택·평가
+8. 적용 전·후의 테스트 Accuracy, Precision, Recall, F1 비교
+9. Feature Engineering 후 선택 모델을 RandomizedSearchCV, GridSearchCV, Optuna로 튜닝
+10. 세 방법 모두 TimeSeriesSplit 3분할 교차검증으로 최적 파라미터 선택
+11. 세 튜닝 방법 중 검증 F1이 가장 높은 모델을 최종 모델로 저장
 
 ## 데이터 기본 정보 확인
 
@@ -212,6 +215,29 @@ Feature Engineering 후 검증 F1이 가장 높은 Logistic Regression이 최종
 
 취소 예약 Recall이 61.2%에서 85.9%로 높아져 실제 취소를 더 많이 찾게 되었고 F1도 개선되었습니다. 다만 취소로 예측하는 범위가 넓어져 Accuracy와 Precision은 낮아졌습니다.
 
+## 하이퍼파라미터 튜닝
+
+Feature Engineering 적용 후 선택된 Logistic Regression을 `RandomizedSearchCV`, `GridSearchCV`, `Optuna`로 각각 튜닝합니다. 도착일 순서를 유지하기 위해 학습 데이터 내부에서 `TimeSeriesSplit(n_splits=3)`을 사용하며, 검증 데이터와 테스트 데이터는 파라미터 탐색에 사용하지 않습니다.
+
+탐색한 파라미터는 다음과 같습니다.
+
+- `C`: 0.03, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0
+- `class_weight`: `None`, `balanced`
+- RandomizedSearchCV: 무작위 8개 조합
+- GridSearchCV: 전체 16개 조합
+- Optuna: TPE sampler로 12회 trial, `C`는 0.02~5.0 로그 범위
+
+교차검증 평균 Recall 80% 이상을 우선 조건으로 정했지만 세 방법 모두 이를 충족한 조합이 없어, 각 방법에서 평균 Recall이 가장 높은 조합을 선택했습니다.
+
+| 구분 | 최적 C | class_weight | Accuracy | Precision | Recall | F1 |
+|---|---:|---|---:|---:|---:|---:|
+| 튜닝 전 | 0.5 | balanced | 0.737 | 0.628 | 0.859 | 0.726 |
+| RandomizedSearchCV | 0.1 | balanced | 0.742 | 0.635 | 0.855 | 0.728 |
+| GridSearchCV | 0.25 | balanced | 0.739 | 0.631 | 0.857 | 0.727 |
+| Optuna | 0.2172 | balanced | 0.739 | 0.631 | 0.856 | 0.727 |
+
+검증 F1이 가장 높은 RandomizedSearchCV 결과가 최종 저장 모델로 선택되었습니다. Streamlit에서는 `Feature Engineering 적용 후 (튜닝 전)`, `RandomizedSearchCV`, `GridSearchCV`, `Optuna` 탭으로 테스트 성능, 혼동행렬, Classification Report, Feature Importance와 모델 정보를 비교할 수 있습니다.
+
 빠른 동작 확인은 소규모 샘플로 실행합니다. 이 결과는 실제 성능으로 해석하지 않습니다.
 
 ```powershell
@@ -250,13 +276,37 @@ Classification Report에서는 취소·정상 예약별 Precision, Recall, F1-Sc
 ```text
 model.joblib                 학습된 전처리+모델
 metadata.json                모델 설정, 입력 변수, 데이터 기간
+metadata_before_feature_engineering.json  적용 전 모델·입력 변수 정보
+metadata_after_feature_engineering.json   적용 후 모델·입력 변수 정보
 metrics.json                 검증/테스트 성능
-model_comparison.csv         후보 모델 비교
-model_comparison.png / .svg  후보 모델 평가 지표 비교 그래프
-feature_importance.csv       주요 예측 변수
-confusion_matrix.png / .svg  테스트 혼동행렬
-confusion_matrix.csv         테스트 혼동행렬 원본 수치
-classification_report.csv    클래스별 Precision·Recall·F1-Score
+model_comparison.csv         Feature Engineering 후 최종 후보 모델 비교
+model_comparison_before_feature_engineering.csv  Feature Engineering 전 후보 모델 비교
+model_comparison_after_feature_engineering.csv   Feature Engineering 후 후보 모델 비교
+feature_engineering_comparison.csv  Feature Engineering 전·후 성능 비교
+model_comparison_before_feature_engineering.png / .svg  적용 전 후보 모델 비교 그래프
+model_comparison_after_feature_engineering.png / .svg   적용 후 후보 모델 비교 그래프
+feature_importance.csv       적용 후 최종 모델의 주요 예측 변수
+feature_importance_before_feature_engineering.csv  적용 전 변수 중요도
+feature_importance_after_feature_engineering.csv   적용 후 변수 중요도
+confusion_matrix_before_feature_engineering.png / .svg  적용 전 테스트 혼동행렬
+confusion_matrix_after_feature_engineering.png / .svg   적용 후 테스트 혼동행렬
+confusion_matrix_before_feature_engineering.csv         적용 전 혼동행렬 원본 수치
+confusion_matrix_after_feature_engineering.csv          적용 후 혼동행렬 원본 수치
+classification_report_before_feature_engineering.csv    적용 전 클래스별 상세 성능
+classification_report_after_feature_engineering.csv     적용 후 클래스별 상세 성능
+tuning_comparison.csv        하이퍼파라미터 튜닝 전·후 테스트 성능
+tuning_metadata.json         탐색 범위, 최적 파라미터, 시간순 교차검증 결과
+model_before_tuning.joblib / model_after_tuning.joblib   튜닝 전·후 저장 모델
+metadata_before_tuning.json / metadata_after_tuning.json 튜닝 전·후 모델 정보
+feature_importance_before_tuning.csv / feature_importance_after_tuning.csv 튜닝 전·후 변수 중요도
+confusion_matrix_before_tuning.csv / confusion_matrix_after_tuning.csv 튜닝 전·후 혼동행렬
+classification_report_before_tuning.csv / classification_report_after_tuning.csv 튜닝 전·후 상세 성능
+tuning_methods_comparison.csv  튜닝 전·RandomizedSearchCV·GridSearchCV·Optuna 테스트 비교
+tuning_metadata_grid_search.json / tuning_metadata_optuna.json  추가 튜닝 방법 설정과 교차검증 성능
+model_grid_search.joblib / model_optuna.joblib  GridSearchCV·Optuna 학습 모델
+feature_importance_grid_search.csv / feature_importance_optuna.csv  GridSearchCV·Optuna 변수 중요도
+confusion_matrix_grid_search.csv / confusion_matrix_optuna.csv  GridSearchCV·Optuna 혼동행렬
+classification_report_grid_search.csv / classification_report_optuna.csv  GridSearchCV·Optuna 상세 성능
 ```
 
 ## 새 예약 예측

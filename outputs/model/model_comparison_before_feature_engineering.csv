@@ -1,0 +1,3 @@
+model,accuracy,precision,recall,f1,rows,cancellation_rate
+random_forest,0.808639,0.831688,0.715094,0.768997,11899,0.445416
+logistic_regression,0.767291,0.697518,0.843208,0.763475,11899,0.445416

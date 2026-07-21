@@ -1,0 +1,27 @@
+{
+  "best_params": {
+    "C": 0.21717420351339214,
+    "class_weight": "balanced"
+  },
+  "best_cv_metrics": {
+    "accuracy": 0.79405,
+    "precision": 0.863286,
+    "recall": 0.607629,
+    "f1": 0.698203
+  },
+  "baseline_params": {
+    "C": 0.5,
+    "class_weight": "balanced"
+  },
+  "parameter_space": {
+    "C": "0.02~5.0 (log scale)",
+    "class_weight": [
+      null,
+      "balanced"
+    ]
+  },
+  "search_method": "Optuna (TPE)",
+  "cv_method": "TimeSeriesSplit(n_splits=3)",
+  "trial_count": 12,
+  "selection_rule": "no candidate reached mean CV Recall 0.80; selected highest mean CV Recall"
+}
