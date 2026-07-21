@@ -36,7 +36,7 @@
 - 원저자: Nuno Antonio, Ana de Almeida, Luís Nunes
 - 원논문: *Hotel booking demand datasets*, Data in Brief, 2019
 
-저장소에는 원본 CSV를 재배포하지 않습니다. Kaggle에서 파일을 내려받아 `data/raw/hotel_bookings.csv`에 배치해야 합니다.
+Kaggle에서 파일을 내려받아 `data/raw/hotel_bookings.csv`에 배치해야 합니다.
 
 ## 핵심 설계
 
@@ -92,7 +92,7 @@ Kaggle의 [Hotel Booking Demand](https://www.kaggle.com/datasets/jessemostipak/h
 data/raw/hotel_bookings.csv
 ```
 
-원본은 CC BY 4.0이며, Antonio, Almeida, Nunes (2019)의 *Hotel booking demand datasets*에서 유래했습니다. 저장소에는 원본 데이터를 재배포하지 않습니다.
+원본은 CC BY 4.0이며, Antonio, Almeida, Nunes (2019)의 *Hotel booking demand datasets*에서 유래했습니다.
 
 원본 CSV에는 두 호텔의 예약이 함께 들어 있습니다.
 
@@ -236,7 +236,3 @@ classification_report.csv    클래스별 Precision·Recall·F1-Score
 ```
 
 출력에는 `cancellation_probability`와 `predicted_canceled`가 추가됩니다.
-
-## 운영 시 유의점
-
-이 모델은 연구용 익명 데이터의 과거 패턴을 학습합니다. 실제 운영 전에는 최근 Lisbon 호텔 데이터로 재학습해야 합니다. 모델 점수는 자동 취소나 고객 차별이 아니라 리마인더 등 저위험 개입의 우선순위로 사용하는 것이 적절합니다.
