@@ -1,7 +1,7 @@
 """저장된 모델을 불러와 신규 City Hotel 예약의 취소 가능성을 예측한다.
 
-명령줄 예측과 Streamlit 예측 화면이 같은 전처리·추론 코드를 사용하도록
-공통 기능을 이 파일에 모아 둔다.
+Streamlit의 단일 예약 및 CSV 일괄 예측 화면이 같은 전처리·추론 코드를
+사용하도록 공통 기능을 이 파일에 모아 둔다.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ try:
     # dashboard.py에서 패키지 형태(src.inference)로 불러올 때 사용한다.
     from .features import add_engineered_features
 except ImportError:
-    # python src/predict.py처럼 src 폴더에서 직접 실행할 때 사용한다.
+    # src 폴더를 모듈 검색 경로에 둔 환경에서도 불러올 수 있게 한다.
     from features import add_engineered_features
 
 

@@ -73,12 +73,11 @@ data/raw/hotel_bookings.csv
        outputs/model/
             ↓
     src/inference.py  공통 추론 파이프라인
-          ↙       ↘
-src/operations.py  src/predict.py
- 리마인더·수요관리   명령줄 CSV 예측
           ↓
      dashboard.py
- 성능·예측·운영 웹 서비스
+ 성능·단일/CSV 예측·운영 웹 서비스
+          ↑
+ src/operations.py  리마인더·수요관리
 ```
 
 `train.py`는 전체 작업 순서만 관리합니다. 복잡한 세부 코드는 기능별 파일로 나누어 두었습니다.
@@ -97,7 +96,6 @@ src/operations.py  src/predict.py
 | `src/evaluation.py` | 지표 계산, 최종 모델 선택, 결과 파일·그래프 저장 |
 | `src/inference.py` | 저장 모델 불러오기, Feature Engineering, 취소 확률 계산을 담당하는 공통 추론 파이프라인 |
 | `src/operations.py` | 고위험 리마인더 대상과 도착일별 예상 취소량 계산 |
-| `src/predict.py` | 공통 추론 파이프라인을 사용해 신규 예약 CSV를 명령줄에서 예측 |
 | `dashboard.py` | 모델 성능 확인, 단일·CSV 예측, 예측 결과 기반 운영계획을 제공하는 Streamlit 웹 서비스 |
 | `requirements.txt` | 실행에 필요한 Python 패키지 목록 |
 | `data/sample/` | 전체 데이터 없이 빠르게 코드 동작을 시험하는 가상 샘플 |
@@ -331,15 +329,3 @@ feature_importance_grid_search.csv / feature_importance_optuna.csv  GridSearchCV
 confusion_matrix_grid_search.csv / confusion_matrix_optuna.csv  GridSearchCV·Optuna 혼동행렬
 classification_report_grid_search.csv / classification_report_optuna.csv  GridSearchCV·Optuna 상세 성능
 ```
-
-## 새 예약 예측
-
-이 단계는 선택 사항입니다. 현재 접수 중인 신규 예약 CSV가 있을 때만 사용합니다. 입력 파일은 학습 데이터와 같은 설명 변수 열을 가져야 하며 `is_canceled`는 없어도 됩니다.
-
-```powershell
-.venv\Scripts\python.exe src\predict.py `
-  --input new_bookings.csv `
-  --output outputs\predictions.csv
-```
-
-출력에는 `cancellation_probability`와 `predicted_canceled`가 추가됩니다.
