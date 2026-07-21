@@ -278,13 +278,24 @@ if report_path.exists() and matrix_csv_path.exists():
     report_table["구분"] = report_table["구분"].replace(
         {"Not canceled": "정상 예약", "Canceled": "취소 예약"}
     )
+    # Accuracy는 클래스가 아닌 전체 점수이므로 건수가 따로 없다.
+    report_table["건수"] = report_table.apply(
+        lambda row: "-" if row["구분"] == "accuracy" else f"{int(row['건수']):,}",
+        axis=1,
+    )
+
+    st.info(
+        "Classification Report는 모델이 **정상 예약과 취소 예약을 각각 얼마나 잘 구분했는지** "
+        "클래스별로 자세히 보여주는 표입니다."
+    )
+
+    st.markdown("#### 실제 Classification Report 결과")
     st.dataframe(
         report_table.style.format(
             {
                 "Precision": "{:.3f}",
                 "Recall": "{:.3f}",
                 "F1-Score": "{:.3f}",
-                "건수": "{:.0f}",
             }
         ),
         width="stretch",
@@ -294,9 +305,29 @@ if report_path.exists() and matrix_csv_path.exists():
         report_table["구분"].isin(["정상 예약", "취소 예약"]),
         ["구분", "Precision", "Recall", "F1-Score"],
     ].set_index("구분")
-    st.bar_chart(class_scores, height=380)
+    st.markdown("#### 정상·취소 예약 성능 비교")
+    score_columns = st.columns(2)
+    for column, class_name in zip(score_columns, ["정상 예약", "취소 예약"]):
+        scores = class_scores.loc[class_name]
+        with column.container(border=True):
+            st.markdown(f"##### {class_name}")
+            st.progress(
+                float(scores["Precision"]),
+                text=f"Precision — {scores['Precision']:.1%}",
+            )
+            st.progress(
+                float(scores["Recall"]),
+                text=f"Recall — {scores['Recall']:.1%}",
+            )
+            st.progress(
+                float(scores["F1-Score"]),
+                text=f"F1-Score — {scores['F1-Score']:.1%}",
+            )
     st.caption(
-        "정상 예약과 취소 예약 각각의 Precision, Recall, F1-Score와 데이터 건수입니다."
+        "진행 막대가 길수록 해당 점수가 높습니다. "
+        f"정상 예약 Recall은 {class_scores.loc['정상 예약', 'Recall']:.1%}, "
+        f"취소 예약 Recall은 {class_scores.loc['취소 예약', 'Recall']:.1%}로 "
+        "모델이 취소 예약을 더 많이 놓치고 있습니다."
     )
 
 # 사용자가 화면에 표시할 변수 개수를 조절할 수 있다.

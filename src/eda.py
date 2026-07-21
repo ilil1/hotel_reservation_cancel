@@ -13,14 +13,55 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 
 plt.rcParams["svg.fonttype"] = "none"
+
+# Windows에서 한글이 네모로 깨지지 않도록 맑은 고딕을 등록한다.
+KOREAN_FONT_PATH = Path("C:/Windows/Fonts/malgun.ttf")
+if KOREAN_FONT_PATH.exists():
+    font_manager.fontManager.addfont(KOREAN_FONT_PATH)
+    plt.rcParams["font.family"] = font_manager.FontProperties(
+        fname=KOREAN_FONT_PATH
+    ).get_name()
+plt.rcParams["axes.unicode_minus"] = False
 
 TARGET = "is_canceled"
 
 # Streamlit에서 이미지를 줄여 표시해도 글자와 선이 선명하도록
 # 일반 화면용보다 높은 해상도로 PNG를 저장한다.
 CHART_DPI = 260
+
+FEATURE_LABELS = {
+    "is_canceled": "취소 여부",
+    "lead_time": "예약 리드타임",
+    "adr": "평균 일일 객실요금",
+    "total_of_special_requests": "특별 요청 수",
+    "previous_cancellations": "과거 취소 횟수",
+    "stays_in_week_nights": "평일 숙박일 수",
+    "stays_in_weekend_nights": "주말 숙박일 수",
+    "adults": "성인 수",
+    "children": "어린이 수",
+    "is_repeated_guest": "재방문 고객 여부",
+    "previous_bookings_not_canceled": "과거 정상 예약 수",
+    "booking_changes": "예약 변경 횟수",
+    "days_in_waiting_list": "대기 일수",
+    "required_car_parking_spaces": "요청 주차 공간 수",
+    "deposit_type": "보증금 유형",
+    "market_segment": "예약 시장",
+    "customer_type": "고객 유형",
+    "arrival_date_month": "도착 월",
+    "country": "고객 국가",
+    "meal": "식사 유형",
+    "lead_time_group": "예약 리드타임 구간",
+    "special_requests_group": "특별 요청 수 구간",
+}
+
+
+def _feature_label(feature: str, multiline: bool = False) -> str:
+    """영문 변수명에 한국어 설명을 함께 표시한다."""
+    separator = "\n" if multiline else " "
+    return f"{feature}{separator}({FEATURE_LABELS.get(feature, feature)})"
 
 
 def _save_figure(fig: plt.Figure, output_without_suffix: Path) -> None:
@@ -117,10 +158,10 @@ def _save_numeric_distributions(city: pd.DataFrame, output: Path) -> None:
         upper = values.quantile(0.99)
         visible = values[values <= upper]
         ax.hist(visible, bins=35, color="#4C78A8", edgecolor="white")
-        ax.set_title(feature)
-        ax.set_xlabel("Value")
-        ax.set_ylabel("Reservations")
-    fig.suptitle("Numeric feature distributions (up to 99th percentile)", fontsize=15)
+        ax.set_title(_feature_label(feature))
+        ax.set_xlabel("값 (Value)")
+        ax.set_ylabel("예약 건수 (Reservations)")
+    fig.suptitle("숫자 특성 분포 (99백분위수까지 표시)", fontsize=15)
     fig.tight_layout()
     _save_figure(fig, output / "numeric_distributions")
     plt.close(fig)
@@ -133,9 +174,9 @@ def _save_categorical_distributions(city: pd.DataFrame, output: Path) -> None:
         limit = 10 if feature == "country" else 12
         counts = city[feature].fillna("Missing").astype(str).value_counts().head(limit)
         ax.barh(counts.index[::-1], counts.values[::-1], color="#72B7B2")
-        ax.set_title(feature)
-        ax.set_xlabel("Reservations")
-    fig.suptitle("Categorical feature distributions", fontsize=15)
+        ax.set_title(_feature_label(feature))
+        ax.set_xlabel("예약 건수 (Reservations)")
+    fig.suptitle("범주 특성 분포", fontsize=15)
     fig.tight_layout()
     _save_figure(fig, output / "categorical_distributions")
     plt.close(fig)
@@ -155,14 +196,15 @@ def _save_correlations(city: pd.DataFrame, output: Path) -> None:
     )
     target_correlation.to_csv(output / "target_numeric_correlations.csv")
 
-    fig, ax = plt.subplots(figsize=(13, 11))
+    fig, ax = plt.subplots(figsize=(15, 13))
     image = ax.imshow(correlation, cmap="coolwarm", vmin=-1, vmax=1)
     ax.set_xticks(np.arange(len(correlation.columns)))
     ax.set_yticks(np.arange(len(correlation.index)))
-    ax.set_xticklabels(correlation.columns, rotation=70, ha="right", fontsize=8)
-    ax.set_yticklabels(correlation.index, fontsize=8)
-    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04, label="Pearson correlation")
-    ax.set_title("Numeric feature correlation matrix")
+    bilingual_labels = [_feature_label(column, multiline=True) for column in correlation.columns]
+    ax.set_xticklabels(bilingual_labels, rotation=65, ha="right", fontsize=8)
+    ax.set_yticklabels(bilingual_labels, fontsize=8)
+    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04, label="Pearson 상관계수")
+    ax.set_title("숫자 특성 상관관계 행렬")
     fig.tight_layout()
     _save_figure(fig, output / "correlation_heatmap")
     plt.close(fig)
@@ -218,10 +260,10 @@ def _save_target_relationships(city: pd.DataFrame, output: Path) -> None:
             rates["cancellation_rate"][::-1],
             color="#F58518",
         )
-        ax.set_title(f"Cancellation rate by {feature}")
-        ax.set_xlabel("Cancellation rate")
+        ax.set_title(f"{_feature_label(feature)}별 취소율")
+        ax.set_xlabel("취소율 (Cancellation rate)")
         ax.set_xlim(0, 1)
-    fig.suptitle("Feature relationships with cancellation target", fontsize=15)
+    fig.suptitle("특성과 취소 여부의 관계", fontsize=15)
     fig.tight_layout()
     _save_figure(fig, output / "target_relationships")
     plt.close(fig)
