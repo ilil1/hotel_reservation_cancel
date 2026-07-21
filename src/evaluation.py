@@ -26,6 +26,24 @@ from sklearn.metrics import (
 )
 from sklearn.pipeline import Pipeline
 
+plt.rcParams["svg.fonttype"] = "none"
+
+CHART_DPI = 260
+
+
+def _save_figure(fig: plt.Figure, output_without_suffix: Path) -> None:
+    """결과 그래프를 고해상도 PNG와 선명한 SVG로 함께 저장한다."""
+    fig.savefig(
+        output_without_suffix.with_suffix(".png"),
+        dpi=CHART_DPI,
+        bbox_inches="tight",
+    )
+    fig.savefig(
+        output_without_suffix.with_suffix(".svg"),
+        format="svg",
+        bbox_inches="tight",
+    )
+
 
 def calculate_metrics(y_true, probability, threshold: float) -> dict[str, float | int]:
     """예측 확률과 임계값으로 주요 분류 성능을 계산한다."""
@@ -57,14 +75,14 @@ def select_best_model(fitted_models: dict[str, Pipeline], x_valid, y_valid):
 
 
 def save_plots(y_valid, valid_probability, threshold, y_test, test_probability, output: Path):
-    """테스트 혼동행렬을 PNG로 저장한다."""
-    ConfusionMatrixDisplay.from_predictions(
+    """테스트 혼동행렬을 PNG와 SVG로 저장한다."""
+    display = ConfusionMatrixDisplay.from_predictions(
         y_test, test_probability >= threshold, cmap="Blues"
     )
     plt.title("Test confusion matrix")
     plt.tight_layout()
-    plt.savefig(output / "confusion_matrix.png", dpi=160)
-    plt.close()
+    _save_figure(display.figure_, output / "confusion_matrix")
+    plt.close(display.figure_)
 
 
 def save_feature_importance(model: Pipeline, output: Path):
@@ -95,8 +113,8 @@ def save_model_comparison_plot(comparison: pd.DataFrame, output: Path) -> None:
     ax.legend(title="Model")
     ax.grid(axis="y", alpha=0.25)
     plt.tight_layout()
-    plt.savefig(output / "model_comparison.png", dpi=160)
-    plt.close()
+    _save_figure(ax.figure, output / "model_comparison")
+    plt.close(ax.figure)
 
 
 def save_classification_details(y_test, test_probability, threshold: float, output: Path) -> None:

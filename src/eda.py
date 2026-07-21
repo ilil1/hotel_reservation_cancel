@@ -14,7 +14,27 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+plt.rcParams["svg.fonttype"] = "none"
+
 TARGET = "is_canceled"
+
+# Streamlit에서 이미지를 줄여 표시해도 글자와 선이 선명하도록
+# 일반 화면용보다 높은 해상도로 PNG를 저장한다.
+CHART_DPI = 260
+
+
+def _save_figure(fig: plt.Figure, output_without_suffix: Path) -> None:
+    """PNG와 확대해도 선명한 SVG 형식을 함께 저장한다."""
+    fig.savefig(
+        output_without_suffix.with_suffix(".png"),
+        dpi=CHART_DPI,
+        bbox_inches="tight",
+    )
+    fig.savefig(
+        output_without_suffix.with_suffix(".svg"),
+        format="svg",
+        bbox_inches="tight",
+    )
 
 NUMERIC_FEATURES = [
     "lead_time",
@@ -67,7 +87,9 @@ def _save_target_distribution(city: pd.DataFrame, output: Path) -> None:
 
     fig, ax = plt.subplots(figsize=(7, 5))
     bars = ax.bar(result["label"], result["count"], color=["#4C78A8", "#E45756"])
-    ax.set_title("City Hotel cancellation target distribution")
+    # 막대 위의 건수·비율 표시가 제목과 겹치지 않도록 위쪽 여백을 둔다.
+    ax.set_ylim(0, result["count"].max() * 1.22)
+    ax.set_title("City Hotel cancellation target distribution", pad=18)
     ax.set_ylabel("Reservations")
     for bar, count, rate in zip(bars, result["count"], result["rate"]):
         ax.text(
@@ -78,7 +100,7 @@ def _save_target_distribution(city: pd.DataFrame, output: Path) -> None:
             va="bottom",
         )
     fig.tight_layout()
-    fig.savefig(output / "target_distribution.png", dpi=160)
+    _save_figure(fig, output / "target_distribution")
     plt.close(fig)
 
 
@@ -100,7 +122,7 @@ def _save_numeric_distributions(city: pd.DataFrame, output: Path) -> None:
         ax.set_ylabel("Reservations")
     fig.suptitle("Numeric feature distributions (up to 99th percentile)", fontsize=15)
     fig.tight_layout()
-    fig.savefig(output / "numeric_distributions.png", dpi=160)
+    _save_figure(fig, output / "numeric_distributions")
     plt.close(fig)
 
 
@@ -115,7 +137,7 @@ def _save_categorical_distributions(city: pd.DataFrame, output: Path) -> None:
         ax.set_xlabel("Reservations")
     fig.suptitle("Categorical feature distributions", fontsize=15)
     fig.tight_layout()
-    fig.savefig(output / "categorical_distributions.png", dpi=160)
+    _save_figure(fig, output / "categorical_distributions")
     plt.close(fig)
 
 
@@ -142,7 +164,7 @@ def _save_correlations(city: pd.DataFrame, output: Path) -> None:
     fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04, label="Pearson correlation")
     ax.set_title("Numeric feature correlation matrix")
     fig.tight_layout()
-    fig.savefig(output / "correlation_heatmap.png", dpi=170)
+    _save_figure(fig, output / "correlation_heatmap")
     plt.close(fig)
 
 
@@ -201,7 +223,7 @@ def _save_target_relationships(city: pd.DataFrame, output: Path) -> None:
         ax.set_xlim(0, 1)
     fig.suptitle("Feature relationships with cancellation target", fontsize=15)
     fig.tight_layout()
-    fig.savefig(output / "target_relationships.png", dpi=160)
+    _save_figure(fig, output / "target_relationships")
     plt.close(fig)
 
 
