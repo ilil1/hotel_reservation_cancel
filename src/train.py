@@ -10,6 +10,7 @@ from data import LEAKAGE_COLUMNS, chronological_split, load_city_hotel
 from data_profile import create_data_profile
 from eda import generate_eda
 from evaluation import save_results, select_best_model
+from features import add_engineered_features
 from models import fit_candidates
 
 
@@ -34,23 +35,26 @@ def main() -> None:
     eda_output = args.output.parent / "eda"
     generate_eda(args.data, eda_output)
 
-    # 3. Lisbon City Hotel 데이터만 불러오고 시간순으로 나눈다.
+    # 3. Lisbon City Hotel 데이터를 불러와 파생 특성을 추가한다.
     x, y = load_city_hotel(args.data)
+    x = add_engineered_features(x)
+
+    # 4. 파생 특성이 추가된 데이터를 도착일 기준 시간순으로 나눈다.
     split = chronological_split(x, y)
     x_train, y_train, x_valid, y_valid, x_test, y_test = split
 
-    # 4. 후보 모델을 학습하고 검증 성능이 가장 좋은 모델을 선택한다.
+    # 5. 후보 모델을 학습하고 검증 성능이 가장 좋은 모델을 선택한다.
     fitted_models = fit_candidates(x_train, y_train, args.random_state)
     model_name, model, comparison = select_best_model(
         fitted_models, x_valid, y_valid
     )
 
-    # 5. 기본 분류 임계값 0.5로 테스트 데이터를 평가한다.
+    # 6. 기본 분류 임계값 0.5로 테스트 데이터를 평가한다.
     valid_probability = model.predict_proba(x_valid)[:, 1]
     threshold = 0.5
     test_probability = model.predict_proba(x_test)[:, 1]
 
-    # 6. 모델, 지표, 메타데이터, 중요도와 그래프를 저장한다.
+    # 7. 모델, 지표, 메타데이터, 중요도와 그래프를 저장한다.
     report = save_results(
         model=model,
         model_name=model_name,

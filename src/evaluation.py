@@ -95,6 +95,8 @@ def save_feature_importance(model: Pipeline, output: Path):
         if hasattr(estimator, "feature_importances_")
         else np.abs(estimator.coef_[0])
     )
+    # 트리 중요도와 회귀계수를 동일하게 비율로 해석할 수 있도록 합을 1로 만든다.
+    importance = importance / importance.sum()
     pd.DataFrame({"feature": names, "importance": importance}).sort_values(
         "importance", ascending=False
     ).to_csv(output / "feature_importance.csv", index=False)

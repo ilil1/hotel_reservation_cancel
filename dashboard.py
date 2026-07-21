@@ -54,6 +54,15 @@ FEATURE_INFO = {
     "adr": ("평균 일일 객실요금", "Average Daily Rate: 하루 평균 객실요금"),
     "required_car_parking_spaces": ("요청 주차 공간 수", "고객이 요청한 주차 공간 개수"),
     "total_of_special_requests": ("특별 요청 수", "침대·고층 객실 등 고객이 남긴 특별 요청 개수"),
+    "total_nights": ("총 숙박일 수", "평일과 주말을 합한 전체 숙박일 수"),
+    "total_guests": ("총 투숙객 수", "성인, 어린이, 영아를 합한 전체 투숙객 수"),
+    "is_family": ("가족 예약 여부", "어린이 또는 영아가 포함된 예약인지 여부"),
+    "previous_bookings_total": ("과거 전체 예약 수", "과거 취소와 정상 예약을 합한 개수"),
+    "previous_cancellation_rate": ("과거 취소율", "과거 전체 예약 중 취소한 비율"),
+    "has_special_requests": ("특별 요청 여부", "특별 요청이 하나 이상 있는지 여부"),
+    "has_booking_changes": ("예약 변경 여부", "예약 내용을 한 번 이상 변경했는지 여부"),
+    "is_agent_booking": ("대행사 예약 여부", "여행사·대행사를 통한 예약인지 여부"),
+    "is_company_booking": ("기업 예약 여부", "기업과 관련된 예약인지 여부"),
 }
 
 CATEGORY_LABELS = {
@@ -331,7 +340,7 @@ if report_path.exists() and matrix_csv_path.exists():
     )
 
 # 사용자가 화면에 표시할 변수 개수를 조절할 수 있다.
-st.subheader("주요 예측 변수")
+st.subheader("Feature Importance (변수 중요도)")
 top_n = st.slider("표시할 변수 수", min_value=5, max_value=30, value=15, step=5)
 top = importance.head(top_n).copy()
 descriptions = top["feature"].map(describe_feature)
@@ -368,18 +377,22 @@ with st.expander("데이터와 모델 정보"):
     train_rows = int(total_rows * 0.70)
     validation_end = int(total_rows * 0.85)
     validation_rows = validation_end - train_rows
+    model_feature_count = len(
+        [column for column in metadata["feature_columns"] if column != "arrival_date"]
+    )
 
     a, b, c, d = st.columns(4)
     a.metric("전체 City Hotel 예약", f"{total_rows:,}건")
     b.metric("테스트 예약", f"{test['rows']:,}건")
     c.metric("테스트 취소율", f"{test['cancellation_rate']:.1%}")
-    d.metric("입력 변수", f"{len(metadata['feature_columns'])}개")
+    d.metric("모델 입력 변수", f"{model_feature_count}개")
 
     st.markdown(
         f"- **전체 City Hotel 예약 {total_rows:,}건**: 원본 데이터에서 City Hotel에 해당하는 전체 예약입니다.\n"
         f"- **테스트 예약 {test['rows']:,}건**: 모델 학습에 사용하지 않고 최종 성능 평가용으로 따로 보관한 예약입니다.\n"
         f"- **테스트 취소율 {test['cancellation_rate']:.1%}**: 테스트 예약 중 실제로 취소된 예약의 비율입니다.\n"
-        f"- **입력 변수 {len(metadata['feature_columns'])}개**: 리드타임, 객실요금, 특별 요청 수 등 모델이 취소 여부를 예측할 때 사용하는 입력 항목입니다."
+        f"- **모델 입력 변수 {model_feature_count}개**: 원본 변수 27개와 Feature Engineering으로 추가한 파생 특성 9개입니다. "
+        "`arrival_date`는 시간순 분할에만 사용하고 모델 입력에서는 제외합니다."
     )
 
     st.markdown("#### 데이터 분할")

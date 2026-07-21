@@ -1,6 +1,6 @@
 {
   "threshold": 0.5,
-  "selected_model": "random_forest",
+  "selected_model": "logistic_regression",
   "feature_columns": [
     "lead_time",
     "arrival_date_year",
@@ -29,7 +29,16 @@
     "adr",
     "required_car_parking_spaces",
     "total_of_special_requests",
-    "arrival_date"
+    "arrival_date",
+    "total_nights",
+    "total_guests",
+    "is_family",
+    "previous_bookings_total",
+    "previous_cancellation_rate",
+    "has_special_requests",
+    "has_booking_changes",
+    "is_agent_booking",
+    "is_company_booking"
   ],
   "leakage_columns_removed": [
     "assigned_room_type",
