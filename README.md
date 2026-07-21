@@ -60,15 +60,21 @@ data/raw/hotel_bookings.csv
             ↓
         src/train.py
             ↓
-    src/data.py       데이터 준비
+    src/data.py       데이터 준비·시간순 분할
     src/features.py   파생 특성 생성
-    src/models.py     모델 학습
-    src/evaluation.py 모델 평가·저장
+    src/models.py     후보 모델 학습·선택
+            ↓
+    src/tuning.py     하이퍼파라미터 튜닝
+       ├─ RandomizedSearchCV
+       ├─ GridSearchCV
+       └─ Optuna
+            ↓
+    src/evaluation.py 성능 평가·결과 저장
             ↓
        outputs/model/
           ↙       ↘
  dashboard.py     src/predict.py
- 결과 웹 표시      신규 예약 예측
+ 결과 웹 표시      최종 모델로 신규 예약 예측
 ```
 
 `train.py`는 전체 작업 순서만 관리합니다. 복잡한 세부 코드는 기능별 파일로 나누어 두었습니다.
@@ -80,7 +86,7 @@ data/raw/hotel_bookings.csv
 | `src/train.py` | 아래 모듈을 순서대로 호출하는 학습 시작 파일 |
 | `src/data.py` | CSV 로딩, City Hotel 추출, 누수 변수 제거, 시간순 데이터 분할 |
 | `src/features.py` | 원본 예약 정보로 Feature Engineering을 수행해 파생 특성 생성 |
-| `src/tuning.py` | RandomizedSearchCV와 TimeSeriesSplit으로 선택 모델의 하이퍼파라미터 탐색 |
+| `src/tuning.py` | TimeSeriesSplit을 사용해 RandomizedSearchCV, GridSearchCV, Optuna로 선택 모델의 하이퍼파라미터 탐색 |
 | `src/data_profile.py` | `head`, `info`, `describe`, `shape`, 결측값과 중복값 점검 |
 | `src/eda.py` | 특성·타겟 분포, 상관관계와 변수별 취소율 분석·시각화 |
 | `src/models.py` | 결측치 처리, 원-핫 인코딩, Logistic Regression·Random Forest 학습 |
