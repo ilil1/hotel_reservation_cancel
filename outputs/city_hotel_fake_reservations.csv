@@ -1,31 +1,101 @@
 ﻿reservation_id,hotel,lead_time,arrival_date_year,arrival_date_month,arrival_date_week_number,arrival_date_day_of_month,stays_in_weekend_nights,stays_in_week_nights,adults,children,babies,meal,country,market_segment,distribution_channel,is_repeated_guest,previous_cancellations,previous_bookings_not_canceled,reserved_room_type,booking_changes,deposit_type,agent,company,days_in_waiting_list,customer_type,adr,required_car_parking_spaces,total_of_special_requests
-TEST-001,City Hotel,2,2017,August,31,1,1,2,1,1,0,BB,PRT,Direct,Direct,1,0,4,D,1,No Deposit,,,0,Transient,80,1,3
-TEST-002,City Hotel,5,2017,August,31,2,1,2,2,0,0,BB,GBR,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,82,1,3
-TEST-003,City Hotel,8,2017,August,31,3,1,2,2,0,0,BB,FRA,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,84,1,3
-TEST-004,City Hotel,11,2017,August,31,4,1,2,2,1,0,BB,ESP,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,86,1,3
-TEST-005,City Hotel,14,2017,August,31,5,1,2,2,0,0,BB,DEU,Direct,Direct,0,0,1,D,1,No Deposit,,,0,Transient,88,1,3
-TEST-006,City Hotel,17,2017,August,31,6,1,2,2,0,0,BB,PRT,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,90,1,3
-TEST-007,City Hotel,20,2017,August,32,7,1,2,2,1,0,BB,GBR,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,92,1,3
-TEST-008,City Hotel,23,2017,August,32,8,1,2,1,0,0,BB,FRA,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,94,1,3
-TEST-009,City Hotel,26,2017,August,32,9,1,2,2,0,0,BB,ESP,Direct,Direct,0,0,1,D,1,No Deposit,,,0,Transient,96,1,3
-TEST-010,City Hotel,29,2017,August,32,10,1,2,2,1,0,BB,DEU,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,98,1,3
-TEST-011,City Hotel,45,2017,August,32,11,0,3,2,0,0,BB,PRT,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,105,0,1
-TEST-012,City Hotel,54,2017,August,32,12,1,3,2,0,0,BB,GBR,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,109,0,1
-TEST-013,City Hotel,63,2017,August,32,13,0,3,2,0,0,BB,FRA,Online TA,TA/TO,0,0,0,D,1,No Deposit,9,,0,Transient,113,0,1
-TEST-014,City Hotel,72,2017,August,33,14,1,3,2,0,0,BB,ESP,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,117,0,1
-TEST-015,City Hotel,81,2017,August,33,15,0,3,1,0,0,BB,DEU,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,121,0,1
-TEST-016,City Hotel,90,2017,August,33,16,1,3,2,0,0,BB,PRT,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,125,0,1
-TEST-017,City Hotel,99,2017,August,33,17,0,3,2,0,0,BB,GBR,Online TA,TA/TO,0,0,0,D,0,No Deposit,9,,0,Transient,129,0,1
-TEST-018,City Hotel,108,2017,August,33,18,1,3,2,0,0,BB,FRA,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,133,0,1
-TEST-019,City Hotel,117,2017,August,33,19,0,3,2,0,0,BB,ESP,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,137,0,1
-TEST-020,City Hotel,126,2017,August,33,20,1,3,2,0,0,BB,DEU,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,141,0,1
-TEST-021,City Hotel,180,2017,August,34,21,2,5,2,0,0,BB,PRT,Groups,TA/TO,0,1,0,D,0,Non Refund,1,,0,Transient,145,0,0
-TEST-022,City Hotel,198,2017,August,34,22,2,5,1,0,0,BB,GBR,Online TA,TA/TO,0,2,0,A,0,Non Refund,9,,0,Transient,152,0,0
-TEST-023,City Hotel,216,2017,August,34,23,2,5,2,0,0,BB,FRA,Groups,TA/TO,0,3,0,A,0,Non Refund,1,,0,Transient,159,0,0
-TEST-024,City Hotel,234,2017,August,34,24,2,5,2,0,0,BB,ESP,Online TA,TA/TO,0,1,0,A,0,Non Refund,9,,0,Transient,166,0,0
-TEST-025,City Hotel,252,2017,August,34,25,2,5,2,0,0,BB,DEU,Groups,TA/TO,0,2,0,D,0,Non Refund,1,,0,Transient,173,0,0
-TEST-026,City Hotel,270,2017,August,34,26,2,5,2,0,0,BB,PRT,Online TA,TA/TO,0,3,0,A,0,Non Refund,9,,0,Transient,180,0,0
-TEST-027,City Hotel,288,2017,August,34,27,2,5,2,0,0,BB,GBR,Groups,TA/TO,0,1,0,A,0,Non Refund,1,,0,Transient,187,0,0
-TEST-028,City Hotel,306,2017,August,35,28,2,5,2,0,0,BB,FRA,Online TA,TA/TO,0,2,0,A,0,Non Refund,9,,0,Transient,194,0,0
-TEST-029,City Hotel,324,2017,August,35,29,2,5,1,0,0,BB,ESP,Groups,TA/TO,0,3,0,D,0,Non Refund,1,,0,Transient,201,0,0
-TEST-030,City Hotel,342,2017,August,35,30,2,5,2,0,0,BB,DEU,Online TA,TA/TO,0,1,0,A,0,Non Refund,9,,0,Transient,208,0,0
+TEST-001,City Hotel,2,2026,August,31,1,1,2,1,1,0,BB,PRT,Direct,Direct,1,0,4,D,1,No Deposit,,,0,Transient,80,1,3
+TEST-002,City Hotel,5,2026,August,31,2,1,2,2,0,0,BB,GBR,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,82,1,3
+TEST-003,City Hotel,8,2026,August,32,3,1,2,2,0,0,BB,FRA,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,84,1,3
+TEST-004,City Hotel,11,2026,August,32,4,1,2,2,1,0,BB,ESP,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,86,1,3
+TEST-005,City Hotel,14,2026,August,32,5,1,2,2,0,0,BB,DEU,Direct,Direct,0,0,1,D,1,No Deposit,,,0,Transient,88,1,3
+TEST-006,City Hotel,17,2026,August,32,6,1,2,2,0,0,BB,PRT,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,90,1,3
+TEST-007,City Hotel,20,2026,August,32,7,1,2,2,1,0,BB,GBR,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,92,1,3
+TEST-008,City Hotel,23,2026,August,32,8,1,2,1,0,0,BB,FRA,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,94,1,3
+TEST-009,City Hotel,26,2026,August,32,9,1,2,2,0,0,BB,ESP,Direct,Direct,0,0,1,D,1,No Deposit,,,0,Transient,96,1,3
+TEST-010,City Hotel,29,2026,August,33,10,1,2,2,1,0,BB,DEU,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,98,1,3
+TEST-011,City Hotel,32,2026,August,33,11,1,2,2,0,0,BB,PRT,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,100,1,3
+TEST-012,City Hotel,35,2026,August,33,12,1,2,2,0,0,BB,GBR,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,102,1,3
+TEST-013,City Hotel,38,2026,August,33,13,1,2,2,1,0,BB,FRA,Direct,Direct,1,0,4,D,1,No Deposit,,,0,Transient,104,1,3
+TEST-014,City Hotel,41,2026,August,33,14,1,2,2,0,0,BB,ESP,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,106,1,3
+TEST-015,City Hotel,44,2026,August,33,15,1,2,1,0,0,BB,DEU,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,108,1,3
+TEST-016,City Hotel,47,2026,August,33,16,1,2,2,1,0,BB,PRT,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,110,1,3
+TEST-017,City Hotel,50,2026,August,34,17,1,2,2,0,0,BB,GBR,Direct,Direct,0,0,1,D,1,No Deposit,,,0,Transient,112,1,3
+TEST-018,City Hotel,53,2026,August,34,18,1,2,2,0,0,BB,FRA,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,114,1,3
+TEST-019,City Hotel,56,2026,August,34,19,1,2,2,1,0,BB,ESP,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,116,1,3
+TEST-020,City Hotel,59,2026,August,34,20,1,2,2,0,0,BB,DEU,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,118,1,3
+TEST-021,City Hotel,62,2026,August,34,21,1,2,2,0,0,BB,PRT,Direct,Direct,0,0,1,D,1,No Deposit,,,0,Transient,120,1,3
+TEST-022,City Hotel,65,2026,August,34,22,1,2,1,1,0,BB,GBR,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,122,1,3
+TEST-023,City Hotel,68,2026,August,34,23,1,2,2,0,0,BB,FRA,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,124,1,3
+TEST-024,City Hotel,71,2026,August,35,24,1,2,2,0,0,BB,ESP,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,126,1,3
+TEST-025,City Hotel,74,2026,August,35,25,1,2,2,1,0,BB,DEU,Direct,Direct,1,0,4,D,1,No Deposit,,,0,Transient,128,1,3
+TEST-026,City Hotel,77,2026,August,35,26,1,2,2,0,0,BB,PRT,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,130,1,3
+TEST-027,City Hotel,80,2026,August,35,27,1,2,2,0,0,BB,GBR,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,132,1,3
+TEST-028,City Hotel,83,2026,August,35,28,1,2,2,1,0,BB,FRA,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,134,1,3
+TEST-029,City Hotel,86,2026,August,35,29,1,2,1,0,0,BB,ESP,Direct,Direct,0,0,1,D,1,No Deposit,,,0,Transient,136,1,3
+TEST-030,City Hotel,89,2026,August,35,30,1,2,2,0,0,BB,DEU,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,138,1,3
+TEST-031,City Hotel,92,2026,August,36,31,1,2,2,1,0,BB,PRT,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,140,1,3
+TEST-032,City Hotel,95,2026,September,36,1,1,2,2,0,0,BB,GBR,Direct,Direct,0,0,1,A,1,No Deposit,,,0,Transient,142,1,3
+TEST-033,City Hotel,98,2026,September,36,2,1,2,2,0,0,BB,FRA,Direct,Direct,0,0,1,D,1,No Deposit,,,0,Transient,144,1,3
+TEST-034,City Hotel,101,2026,September,36,3,1,2,2,1,0,BB,ESP,Direct,Direct,1,0,4,A,1,No Deposit,,,0,Transient,146,1,3
+TEST-035,City Hotel,45,2026,September,36,4,0,3,2,0,0,BB,DEU,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,105,0,1
+TEST-036,City Hotel,52,2026,September,36,5,1,3,1,0,0,BB,PRT,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,108,0,1
+TEST-037,City Hotel,59,2026,September,36,6,0,3,2,0,0,BB,GBR,Online TA,TA/TO,0,0,0,D,0,No Deposit,9,,0,Transient,111,0,1
+TEST-038,City Hotel,66,2026,September,37,7,1,3,2,0,0,BB,FRA,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,114,0,1
+TEST-039,City Hotel,73,2026,September,37,8,0,3,2,0,0,BB,ESP,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,117,0,1
+TEST-040,City Hotel,80,2026,September,37,9,1,3,2,0,0,BB,DEU,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,120,0,1
+TEST-041,City Hotel,87,2026,September,37,10,0,3,2,0,0,BB,PRT,Online TA,TA/TO,0,0,0,D,1,No Deposit,9,,0,Transient,123,0,1
+TEST-042,City Hotel,94,2026,September,37,11,1,3,2,0,0,BB,GBR,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,126,0,1
+TEST-043,City Hotel,101,2026,September,37,12,0,3,1,0,0,BB,FRA,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,129,0,1
+TEST-044,City Hotel,108,2026,September,37,13,1,3,2,0,0,BB,ESP,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,132,0,1
+TEST-045,City Hotel,115,2026,September,38,14,0,3,2,0,0,BB,DEU,Online TA,TA/TO,0,0,0,D,0,No Deposit,9,,0,Transient,135,0,1
+TEST-046,City Hotel,122,2026,September,38,15,1,3,2,0,0,BB,PRT,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,138,0,1
+TEST-047,City Hotel,129,2026,September,38,16,0,3,2,0,0,BB,GBR,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,141,0,1
+TEST-048,City Hotel,136,2026,September,38,17,1,3,2,0,0,BB,FRA,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,144,0,1
+TEST-049,City Hotel,143,2026,September,38,18,0,3,2,0,0,BB,ESP,Online TA,TA/TO,0,0,0,D,0,No Deposit,9,,0,Transient,147,0,1
+TEST-050,City Hotel,150,2026,September,38,19,1,3,1,0,0,BB,DEU,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,150,0,1
+TEST-051,City Hotel,157,2026,September,38,20,0,3,2,0,0,BB,PRT,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,153,0,1
+TEST-052,City Hotel,164,2026,September,39,21,1,3,2,0,0,BB,GBR,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,156,0,1
+TEST-053,City Hotel,171,2026,September,39,22,0,3,2,0,0,BB,FRA,Online TA,TA/TO,0,0,0,D,1,No Deposit,9,,0,Transient,159,0,1
+TEST-054,City Hotel,178,2026,September,39,23,1,3,2,0,0,BB,ESP,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,162,0,1
+TEST-055,City Hotel,185,2026,September,39,24,0,3,2,0,0,BB,DEU,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,165,0,1
+TEST-056,City Hotel,192,2026,September,39,25,1,3,2,0,0,BB,PRT,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,168,0,1
+TEST-057,City Hotel,199,2026,September,39,26,0,3,1,0,0,BB,GBR,Online TA,TA/TO,0,0,0,D,0,No Deposit,9,,0,Transient,171,0,1
+TEST-058,City Hotel,206,2026,September,39,27,1,3,2,0,0,BB,FRA,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,174,0,1
+TEST-059,City Hotel,213,2026,September,40,28,0,3,2,0,0,BB,ESP,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,177,0,1
+TEST-060,City Hotel,220,2026,September,40,29,1,3,2,0,0,BB,DEU,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,180,0,1
+TEST-061,City Hotel,227,2026,September,40,30,0,3,2,0,0,BB,PRT,Online TA,TA/TO,0,0,0,D,0,No Deposit,9,,0,Transient,183,0,1
+TEST-062,City Hotel,234,2026,October,40,1,1,3,2,0,0,BB,GBR,Online TA,TA/TO,0,0,0,A,1,No Deposit,9,,0,Transient,186,0,1
+TEST-063,City Hotel,241,2026,October,40,2,0,3,2,0,0,BB,FRA,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,189,0,1
+TEST-064,City Hotel,248,2026,October,40,3,1,3,1,0,0,BB,ESP,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,192,0,1
+TEST-065,City Hotel,255,2026,October,40,4,0,3,2,0,0,BB,DEU,Online TA,TA/TO,0,0,0,D,1,No Deposit,9,,0,Transient,195,0,1
+TEST-066,City Hotel,262,2026,October,41,5,1,3,2,0,0,BB,PRT,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,198,0,1
+TEST-067,City Hotel,269,2026,October,41,6,0,3,2,0,0,BB,GBR,Online TA,TA/TO,0,0,0,A,0,No Deposit,9,,0,Transient,201,0,1
+TEST-068,City Hotel,180,2026,October,41,7,2,5,2,0,0,BB,FRA,Online TA,TA/TO,0,1,0,A,0,Non Refund,9,,0,Transient,145,0,0
+TEST-069,City Hotel,192,2026,October,41,8,2,5,2,0,0,BB,ESP,Groups,TA/TO,0,2,0,D,0,Non Refund,1,,0,Transient,150,0,0
+TEST-070,City Hotel,204,2026,October,41,9,2,5,2,0,0,BB,DEU,Online TA,TA/TO,0,3,0,A,0,Non Refund,9,,0,Transient,155,0,0
+TEST-071,City Hotel,216,2026,October,41,10,2,5,1,0,0,BB,PRT,Groups,TA/TO,0,1,0,A,0,Non Refund,1,,0,Transient,160,0,0
+TEST-072,City Hotel,228,2026,October,41,11,2,5,2,0,0,BB,GBR,Online TA,TA/TO,0,2,0,A,0,Non Refund,9,,0,Transient,165,0,0
+TEST-073,City Hotel,240,2026,October,42,12,2,5,2,0,0,BB,FRA,Groups,TA/TO,0,3,0,D,0,Non Refund,1,,0,Transient,170,0,0
+TEST-074,City Hotel,252,2026,October,42,13,2,5,2,0,0,BB,ESP,Online TA,TA/TO,0,1,0,A,0,Non Refund,9,,0,Transient,175,0,0
+TEST-075,City Hotel,264,2026,October,42,14,2,5,2,0,0,BB,DEU,Groups,TA/TO,0,2,0,A,0,Non Refund,1,,0,Transient,180,0,0
+TEST-076,City Hotel,276,2026,October,42,15,2,5,2,0,0,BB,PRT,Online TA,TA/TO,0,3,0,A,0,Non Refund,9,,0,Transient,185,0,0
+TEST-077,City Hotel,288,2026,October,42,16,2,5,2,0,0,BB,GBR,Groups,TA/TO,0,1,0,D,0,Non Refund,1,,0,Transient,190,0,0
+TEST-078,City Hotel,300,2026,October,42,17,2,5,1,0,0,BB,FRA,Online TA,TA/TO,0,2,0,A,0,Non Refund,9,,0,Transient,195,0,0
+TEST-079,City Hotel,312,2026,October,42,18,2,5,2,0,0,BB,ESP,Groups,TA/TO,0,3,0,A,0,Non Refund,1,,0,Transient,200,0,0
+TEST-080,City Hotel,324,2026,October,43,19,2,5,2,0,0,BB,DEU,Online TA,TA/TO,0,1,0,A,0,Non Refund,9,,0,Transient,205,0,0
+TEST-081,City Hotel,336,2026,October,43,20,2,5,2,0,0,BB,PRT,Groups,TA/TO,0,2,0,D,0,Non Refund,1,,0,Transient,210,0,0
+TEST-082,City Hotel,348,2026,October,43,21,2,5,2,0,0,BB,GBR,Online TA,TA/TO,0,3,0,A,0,Non Refund,9,,0,Transient,215,0,0
+TEST-083,City Hotel,360,2026,October,43,22,2,5,2,0,0,BB,FRA,Groups,TA/TO,0,1,0,A,0,Non Refund,1,,0,Transient,220,0,0
+TEST-084,City Hotel,372,2026,October,43,23,2,5,2,0,0,BB,ESP,Online TA,TA/TO,0,2,0,A,0,Non Refund,9,,0,Transient,225,0,0
+TEST-085,City Hotel,384,2026,October,43,24,2,5,1,0,0,BB,DEU,Groups,TA/TO,0,3,0,D,0,Non Refund,1,,0,Transient,230,0,0
+TEST-086,City Hotel,396,2026,October,43,25,2,5,2,0,0,BB,PRT,Online TA,TA/TO,0,1,0,A,0,Non Refund,9,,0,Transient,235,0,0
+TEST-087,City Hotel,408,2026,October,44,26,2,5,2,0,0,BB,GBR,Groups,TA/TO,0,2,0,A,0,Non Refund,1,,0,Transient,240,0,0
+TEST-088,City Hotel,420,2026,October,44,27,2,5,2,0,0,BB,FRA,Online TA,TA/TO,0,3,0,A,0,Non Refund,9,,0,Transient,245,0,0
+TEST-089,City Hotel,432,2026,October,44,28,2,5,2,0,0,BB,ESP,Groups,TA/TO,0,1,0,D,0,Non Refund,1,,0,Transient,250,0,0
+TEST-090,City Hotel,444,2026,October,44,29,2,5,2,0,0,BB,DEU,Online TA,TA/TO,0,2,0,A,0,Non Refund,9,,0,Transient,255,0,0
+TEST-091,City Hotel,456,2026,October,44,30,2,5,2,0,0,BB,PRT,Groups,TA/TO,0,3,0,A,0,Non Refund,1,,0,Transient,260,0,0
+TEST-092,City Hotel,468,2026,October,44,31,2,5,1,0,0,BB,GBR,Online TA,TA/TO,0,1,0,A,0,Non Refund,9,,0,Transient,265,0,0
+TEST-093,City Hotel,480,2026,November,44,1,2,5,2,0,0,BB,FRA,Groups,TA/TO,0,2,0,D,0,Non Refund,1,,0,Transient,270,0,0
+TEST-094,City Hotel,492,2026,November,45,2,2,5,2,0,0,BB,ESP,Online TA,TA/TO,0,3,0,A,0,Non Refund,9,,0,Transient,275,0,0
+TEST-095,City Hotel,504,2026,November,45,3,2,5,2,0,0,BB,DEU,Groups,TA/TO,0,1,0,A,0,Non Refund,1,,0,Transient,280,0,0
+TEST-096,City Hotel,516,2026,November,45,4,2,5,2,0,0,BB,PRT,Online TA,TA/TO,0,2,0,A,0,Non Refund,9,,0,Transient,285,0,0
+TEST-097,City Hotel,528,2026,November,45,5,2,5,2,0,0,BB,GBR,Groups,TA/TO,0,3,0,D,0,Non Refund,1,,0,Transient,290,0,0
+TEST-098,City Hotel,540,2026,November,45,6,2,5,2,0,0,BB,FRA,Online TA,TA/TO,0,1,0,A,0,Non Refund,9,,0,Transient,295,0,0
+TEST-099,City Hotel,552,2026,November,45,7,2,5,1,0,0,BB,ESP,Groups,TA/TO,0,2,0,A,0,Non Refund,1,,0,Transient,300,0,0
+TEST-100,City Hotel,564,2026,November,45,8,2,5,2,0,0,BB,DEU,Online TA,TA/TO,0,3,0,A,0,Non Refund,9,,0,Transient,305,0,0
